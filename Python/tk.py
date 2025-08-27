@@ -1,10 +1,17 @@
 import tkinter as tk
 from tkinter import *
 import random
+import os
+import time
+
+wait = int(input("Delay: "))
+time.sleep(wait)
+
 root = tk.Tk()
 houser = 1
 housec = 0
-image = PhotoImage(file="C:/Users/samhu/Downloads/goober_2.png")
+
+image = PhotoImage(file=os.path.relpath('house.png', os.path.dirname(__file__)))
 root.iconphoto(True,image)
 def addhouse():
     global houser
@@ -28,18 +35,14 @@ def popuploop():
     popuphouse.pack()
     popup.protocol("WM_DELETE_WINDOW", popuploop)
     popup.bind("<KeyPress>", stop)
-    root.after(1000, popuploop)
+    root.after(100, popuploop)
 
 def stop(event):
     if (event.keysym == 'c'):
         root.destroy()
 
-root.after(1000, popuploop)
+root.after(100, popuploop)
 root.bind("<KeyPress>", stop)
 popuploop()
 root.protocol("WM_DELETE_WINDOW", popuploop)
 root.mainloop()
-
-
-
-
