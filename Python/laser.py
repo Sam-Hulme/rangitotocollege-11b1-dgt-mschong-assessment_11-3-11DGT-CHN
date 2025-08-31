@@ -68,7 +68,7 @@ def fillRect(startCoords,endCoords,type): #Fill a rectangle of panels
 
 
 
-def boxSprite(y,x,flipped,under):
+def boxSprite(y,x,flipped):
     panels[y][x].delete("main")
     panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,outline="#787FB6",width=8,fill="#171717", tags="main")
     startX = panelWidth/4.5
@@ -78,9 +78,9 @@ def boxSprite(y,x,flipped,under):
         startX = endX
         endX = temp
     panels[y][x].create_line(startX,panelHeight/4.5,endX,panelHeight-panelHeight/4.5,fill="#62f960",width=5, tags="main")
+    objects[y][x][2] = objects[y][x][0]
     objects[y][x][0] = "b"
     objects[y][x][1] = flipped
-    objects[y][x][2] = under
     return panels[y][x]
 
 def laserSprite(x,y,rot,emitter = False):
@@ -113,7 +113,7 @@ def emitterSprite(y,x,active,dir): #As with most things, 0 = up, 1 = right, 2 = 
     panels[y][x].bind("<Button-1>", lambda event: laserMove(y,x,dir))
     
 def laserMove(y,x,dir):
-    emitterSprite(y,x,True)
+    emitterSprite(y,x,True,dir)
     laserData[0] = [y,x,dir,True]
     yLoop = 0
     xLoop = 0
@@ -176,6 +176,7 @@ def objectMove(event, object):
     type = objects[y][x][0]
     flipped = objects[y][x][1]
     panels[y][x].unbind("<Button-1>") #Unbind move select
+    panels[y][x].delete("selected")
     if objects[y][x][2] not in ['','l']:
         setPanel(y,x,objects[y][x][2])
     else:
@@ -198,29 +199,34 @@ def objectMove(event, object):
         x += 1
         if x > 9:
             x = 9
-
+    if objects[y][x][0] in ['b','w','e','r']: #Objects that block box movement
+        y = selectedObject[0]
+        x = selectedObject[1] #Revert movement, making functions below replace existing box that was removed above.
     if (type == "b"):
-        boxSprite(y,x,flipped,objects[y][x][0])
+        boxSprite(y,x,flipped)
     selectedObject = [y,x]
-    panels[y][x].bind("<Button-1>", lambda event: objectSelect(panels[y][x]))
+    panels[y][x].bind("<Button-1>", objectSelect)
     # panels[0][0].delete("all")
     # panels[0][0].create_text(32,32,text=[y,x],fill="white")
     if [y,x] in laserFloors:
         laserFloors.remove([y,x])
     if laserData[0][3]:
         laserMove(laserData[0][0],laserData[0][1],laserData[0][2])
-    
+    selectIndicator()
     # print(selectedObject)
 
-def objectSelect(object):
+def objectSelect(event, object = 0):
+    if (event != 0):
+        object = event.widget
     global selectedObject
-    if (len(selectedObject) == 0):
-        selectedObject = object #TODO: Make it set objectSelect to the objects position, not the panel itself.
-    old = panels[selectedObject[0]][selectedObject[1]]
-    old.delete('selected') #Delete the border from the old panel
     objectInfo = object.grid_info()
     y = objectInfo['row']
     x = objectInfo['column']
+    if (len(selectedObject) == 0):
+        selectedObject = [y,x] #TODO: Make it set objectSelect to the objects position, not the panel itself.
+    else:
+        old = panels[selectedObject[0]][selectedObject[1]]
+        old.delete('selected') #Delete the border from the old panel
     if (selectedObject != [y,x]):
         selectedObject = [y,x]
         selectIndicator()
@@ -229,12 +235,13 @@ def selectIndicator():
     global selectedObject
     x = selectedObject[1]
     y = selectedObject[0]
-    panels[y][x].create_rectangle(0,0,panelWidth,panelHeight, outline="green", width=4, fill='', tags='selected') #Empty fill to make it only an outline
+    panels[y][x].create_rectangle(0,0,panelWidth,panelHeight, outline="green", width=16, fill='', tags='selected') #Empty fill to make it only an outline
+    
+def selectAnimation(y,x):
+    global selectLoopFrames
     
 
 
-#TODO: Make it remember what tiles are supposed to be floors if another object is on top.
-#TODO: Move sprite functions to seperate file
 
 
     

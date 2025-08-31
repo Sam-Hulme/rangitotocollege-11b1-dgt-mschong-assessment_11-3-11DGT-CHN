@@ -6,18 +6,26 @@ from laser import *
 selectedObject = []
 
 fillRect([5,3],[8,6],"f")
-fillRect([3,1],[8,1],"w")
-fillRect([3,8],[8,8],"w")
-fillRect([3,2],[3,7],"w")
+# fillRect([3,1],[8,1],"w")
+# fillRect([3,8],[8,8],"w")
+# fillRect([3,2],[3,7],"w")
 
-box1 = boxSprite(4,7,False,'')
-box2 = boxSprite(5,3,True,'f')
+boxes = []
+boxes.append(boxSprite(4,7,False))
+boxes.append(boxSprite(5,3,True))
+boxes.append(boxSprite(6,5,False))
+boxes.append(boxSprite(6,6,True))
+
 emitterSprite(8,7,False,0)
 
+
 selectedObject = [5,3]
+objectSelect(0, boxes[0])
+
+
 root.bind("<Key>",lambda event: objectMove(event, selectedObject))
-box1.bind("<Button-1>", lambda event: objectSelect(box1))
-box2.bind("<Button-1>", lambda event: objectSelect(box2))
+for i in boxes:
+    i.bind("<Button-1>", objectSelect)
 
 
 root.mainloop()
