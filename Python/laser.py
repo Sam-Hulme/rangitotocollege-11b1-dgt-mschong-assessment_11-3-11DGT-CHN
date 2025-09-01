@@ -23,6 +23,7 @@ objectColours = { # A dictionary of the colours of solid colour objects
     l = laser
     e = emitter
 """
+boxBlocks = ['b','w','e','r'] #Objects that block box movement
 
 laserFloors = []
 selectedObject = []
@@ -84,8 +85,8 @@ def boxSprite(y,x,flipped):
     return panels[y][x]
 
 def laserSprite(x,y,rot,emitter = False):
-    if not emitter:
-        panels[y][x].delete("main") #Don't delete the emitter sprite
+    if not emitter and not objects[y][x][0] == 'l': 
+        panels[y][x].delete("main") #Don't delete the emitter sprite or the sprite of other lasers (if laser goes over itself)
     if (rot == 'y'):
         startX = panelWidth/2
         startY = 0
@@ -105,15 +106,35 @@ def laserSprite(x,y,rot,emitter = False):
     objects[y][x][0] = "l"
 
 def emitterSprite(y,x,active,dir): #As with most things, 0 = up, 1 = right, 2 = down, and 3 = left
-    panels[y][x].delete("main")
+    #TODO: make versions of emitter and reciever sprites at different orientations
+    panels[y][x].delete("main") 
     panels[y][x].create_oval(0,panelHeight/2,panelWidth,panelHeight,outline="#b0b0b0",fill="#3e3e3e",width=6, tags="main")
     if (active == True):
         laserSprite(x,y,"y",True)
     objects[y][x][0] = "e"
+    objects[y][x][1] = dir
     panels[y][x].bind("<Button-1>", lambda event: laserMove(y,x,dir))
+
+def recieverSprite(y,x,laser,dir):
+    #Note: Dir will be the direction of the incoming laser, so it will be inverted from the direction of the emitter
+    global recieverLocation
+    recieverLocation = [y,x,dir]
+    panels[y][x].delete("main")
+    oval = panels[y][x].create_oval(0,panelHeight/2,panelWidth,panelHeight,outline="#f62d2d",fill="#3e3e3e",width=6, tags="main")
+    if dir == 0 or dir == 2:
+        laserdir = 'y'
+    else:
+        laserdir = 'x'
+    if (laser):
+        laserSprite(x,y,laserdir,True)
+        panels[y][x].itemconfig(oval, fill="#f88080")
+    objects[y][x][0] = 'r'
+    objects[y][x][1] = dir
+    
     
 def laserMove(y,x,dir):
     emitterSprite(y,x,True,dir)
+    recieverSprite(recieverLocation[0],recieverLocation[1],False,recieverLocation[2])
     laserData[0] = [y,x,dir,True]
     yLoop = 0
     xLoop = 0
@@ -143,7 +164,7 @@ def laserMove(y,x,dir):
             rot = "x"
         try:
             if (x < 0 or y < 0):
-                raise IndexError
+                raise IndexError #Also raise indexerror if the coordinates go below zero
             elif (objects[y][x][0] == "w" or objects[y][x][0] == "f"):
                 if objects[y][x][0] == "f":
                     panels[y][x].delete("main") #Delete what is currently in the panel to not waste memory
@@ -161,6 +182,9 @@ def laserMove(y,x,dir):
                     dir += 1
                     if dir > 3:
                         dir = 0
+            elif (objects[y][x][0] == 'r'): 
+                    recieverSprite(y,x,True,dir)
+                    break
             else:
                 laserSprite(x,y,rot)
             #panels[y][x].create_text(panelWidth/2, panelHeight/2, text=dir) #Debug code to check the direction of lasers
@@ -199,7 +223,7 @@ def objectMove(event, object):
         x += 1
         if x > 9:
             x = 9
-    if objects[y][x][0] in ['b','w','e','r']: #Objects that block box movement
+    if objects[y][x][0] in boxBlocks: 
         y = selectedObject[0]
         x = selectedObject[1] #Revert movement, making functions below replace existing box that was removed above.
     if (type == "b"):
@@ -239,6 +263,7 @@ def selectIndicator():
     
 def selectAnimation(y,x):
     global selectLoopFrames
+    #TODO: make animation for selected object frame
     
 
 
