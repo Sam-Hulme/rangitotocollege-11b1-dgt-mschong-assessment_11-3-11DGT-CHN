@@ -7,7 +7,7 @@ root.configure(bg='red')
 #This game uses a panel system for elements, with a grid of canvases that can be modified to have images or solid colours displayed.
 panelColumns = 10
 panelRows = 10
-panelWidth = 64
+panelWidth = 64 #These values can be adjusted and everything will be resized accordingly.
 panelHeight = 64
 panels = [[]] #The canvases themselves that will be drawn to to show sprites.
 objects = [[]] #A grid of empty strings that will be filled to reflect the types of objects at each location
@@ -16,18 +16,26 @@ objectColours = { # A dictionary of the colours of solid colour objects
     "f": "#555555"
 }
 """
-    w = Wall
-    f = floor
-    [empty] = nothing
-    b = box
-    l = laser
-    e = emitter
+    w = Wall,
+    f = floor,
+    [empty] = nothing,
+    b = box,
+    l = laser,
+    e = emitter,
+    r = reciever
 """
 boxBlocks = ['b','w','e','r'] #Objects that block box movement
 
+levels = []
+level = 0
+colours = []
+
 laserFloors = []
 selectedObject = []
-laserData = [[0,0,0,False],[0,0,0,False]]
+laserEmitter = [0,0,0,False]
+laserRecievers = {}
+laserEvents = {}
+frozen = False
 global selectLoop #The event for the selected rectangle moving animation
 selectLoopFrames = 0
 # def init(): #Run once to initialise an empty level, returns a 2d array with all the canvas objects. Running again will reset the level.
@@ -47,6 +55,42 @@ for i in range(panelColumns*panelRows):
     panels[row].append(panel) #Add all panels to a list (so they can be iterated through)
     objects[row].append(['','',''])
     # return panels
+
+panels[0][0].create_text(32,32,text=level,fill='white')
+def nextLevel(): #Reset everything and start the next level
+    global level
+    global laserFloors
+    global laserData
+    global selectedObject
+    global objects
+    global laserEmitter
+    global laserRecievers
+    global laserEvents
+    global frozen
+    for y in range(10):
+        for x in range(10):
+            panels[y][x].delete("all") #Clear all panels in the level
+            objects[y][x] = ['','',''] #Reset object array
+    root.unbind_all("<Button-1>")
+    root.unbind_all("<Key>")
+    laserFloors = [] #Reset all variables
+    laserData = laserData = [[0,0,0,False],[0,0,0,False]]
+    selectedObject = []
+    laserEmitter = [0,0,0,False]
+    laserRecievers = {}
+    laserEvents = {}
+    frozen = False
+
+    level += 1
+    panels[0][0].create_text(32,32,text=level,fill='white')
+    levels[level]()
+
+def freeze(): #Unbind everything to freeze the level
+    global frozen
+    root.unbind_all("<Key>")
+    root.unbind_all("<Button-1>")
+    frozen = True
+
 
 def setPanel(y, x, type): #set a single panel to a solid colour object
     panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill=objectColours[type], tags="main")
@@ -87,11 +131,13 @@ def boxSprite(y,x,flipped):
 def laserSprite(x,y,rot,emitter = False):
     if not emitter and not objects[y][x][0] == 'l': 
         panels[y][x].delete("main") #Don't delete the emitter sprite or the sprite of other lasers (if laser goes over itself)
+        objects[y][x][0] = "l"
     if (rot == 'y'):
         startX = panelWidth/2
         startY = 0
         endX = startX
         endY = panelHeight
+        dir = panelWidth
         if (emitter):
             endY = panelHeight*0.75
     elif (rot == 'x'):
@@ -99,26 +145,26 @@ def laserSprite(x,y,rot,emitter = False):
         startY = panelHeight/2
         endX = panelWidth
         endY = startY
+        dir = panelHeight #The dimension to use to determine the size of the laser
         if (emitter):
             endX = panelWidth*0.75
-    panels[y][x].create_line(startX,startY,endX,endY,width=20,fill="#FF6A6A", tags="main")
-    panels[y][x].create_line(startX,startY,endX,endY,width=12,fill="#d10202", tags="main")
-    objects[y][x][0] = "l"
+    panels[y][x].create_line(startX,startY,endX,endY,width=dir/3.2,fill="#FF6A6A", tags="main")
+    panels[y][x].create_line(startX,startY,endX,endY,width=dir/(64/12),fill="#d10202", tags="main")
 
 def emitterSprite(y,x,active,dir): #As with most things, 0 = up, 1 = right, 2 = down, and 3 = left
     #TODO: make versions of emitter and reciever sprites at different orientations
     panels[y][x].delete("main") 
     panels[y][x].create_oval(0,panelHeight/2,panelWidth,panelHeight,outline="#b0b0b0",fill="#3e3e3e",width=6, tags="main")
+    panels[y][x].unbind("<Button-1>")
     if (active == True):
         laserSprite(x,y,"y",True)
     objects[y][x][0] = "e"
     objects[y][x][1] = dir
     panels[y][x].bind("<Button-1>", lambda event: laserMove(y,x,dir))
 
-def recieverSprite(y,x,laser,dir):
+def recieverSprite(y,x,laser,dir,colour):
     #Note: Dir will be the direction of the incoming laser, so it will be inverted from the direction of the emitter
-    global recieverLocation
-    recieverLocation = [y,x,dir]
+    laserRecievers[colour] = [y,x,dir,laser]
     panels[y][x].delete("main")
     oval = panels[y][x].create_oval(0,panelHeight/2,panelWidth,panelHeight,outline="#f62d2d",fill="#3e3e3e",width=6, tags="main")
     if dir == 0 or dir == 2:
@@ -130,12 +176,15 @@ def recieverSprite(y,x,laser,dir):
         panels[y][x].itemconfig(oval, fill="#f88080")
     objects[y][x][0] = 'r'
     objects[y][x][1] = dir
+    objects[y][x][2] = colour
     
     
 def laserMove(y,x,dir):
     emitterSprite(y,x,True,dir)
-    recieverSprite(recieverLocation[0],recieverLocation[1],False,recieverLocation[2])
-    laserData[0] = [y,x,dir,True]
+    for c, i in laserRecievers.items():
+        recieverSprite(i[0],i[1],False,i[2],c)
+    global laserEmitter
+    laserEmitter = [y,x,dir,True]
     yLoop = 0
     xLoop = 0
     for l in objects: #Iterate over existing lasers to remove them
@@ -183,7 +232,8 @@ def laserMove(y,x,dir):
                     if dir > 3:
                         dir = 0
             elif (objects[y][x][0] == 'r'): 
-                    recieverSprite(y,x,True,dir)
+                    recieverSprite(y,x,True,dir,objects[y][x][2])
+                    laserEvents[objects[y][x][2]]()
                     break
             else:
                 laserSprite(x,y,rot)
@@ -192,6 +242,8 @@ def laserMove(y,x,dir):
             break #If it tries to check a panel outside the range, which means it has left the screen and should stop.
 
 def objectMove(event, object):
+    if frozen:
+        return
     global selectedObject
     if (len(selectedObject) == 0):
         selectedObject = object
@@ -230,12 +282,12 @@ def objectMove(event, object):
         boxSprite(y,x,flipped)
     selectedObject = [y,x]
     panels[y][x].bind("<Button-1>", objectSelect)
-    # panels[0][0].delete("all")
-    # panels[0][0].create_text(32,32,text=[y,x],fill="white")
+    panels[0][0].delete("all")
+    panels[0][0].create_text(32,32,text=[y,x],fill="white")
     if [y,x] in laserFloors:
         laserFloors.remove([y,x])
-    if laserData[0][3]:
-        laserMove(laserData[0][0],laserData[0][1],laserData[0][2])
+    if laserEmitter[3]:
+        laserMove(laserEmitter[0],laserEmitter[1],laserEmitter[2])
     selectIndicator()
     # print(selectedObject)
 
@@ -251,14 +303,14 @@ def objectSelect(event, object = 0):
     else:
         old = panels[selectedObject[0]][selectedObject[1]]
         old.delete('selected') #Delete the border from the old panel
-    if (selectedObject != [y,x]):
-        selectedObject = [y,x]
-        selectIndicator()
+    selectedObject = [y,x]
+    selectIndicator()
 
 def selectIndicator():
     global selectedObject
     x = selectedObject[1]
     y = selectedObject[0]
+    panels[y][x].delete('selected')
     panels[y][x].create_rectangle(0,0,panelWidth,panelHeight, outline="green", width=16, fill='', tags='selected') #Empty fill to make it only an outline
     
 def selectAnimation(y,x):
@@ -266,7 +318,9 @@ def selectAnimation(y,x):
     #TODO: make animation for selected object frame
     
 
-
+def laserEvent(**events):
+    global laserEvents
+    laserEvents = events
 
 
     
