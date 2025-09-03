@@ -13,7 +13,12 @@ panels = [[]] #The canvases themselves that will be drawn to to show sprites.
 objects = [[]] #A grid of empty strings that will be filled to reflect the types of objects at each location
 objectColours = { # A dictionary of the colours of solid colour objects
     "w":"#367FEC",
-    "f": "#555555"
+    "f": "#555555",
+    "d": "#F3C873" #TODO: Add proper sprite for doors
+}
+laserColours = {
+    'red': "#f62d2d",
+    'green': "#37EA0A"
 }
 """
     w = Wall,
@@ -22,13 +27,15 @@ objectColours = { # A dictionary of the colours of solid colour objects
     b = box,
     l = laser,
     e = emitter,
-    r = reciever
+    r = reciever,
+    d = door
 """
-boxBlocks = ['b','w','e','r'] #Objects that block box movement
+boxBlocks = ['b','w','e','r','d'] #Objects that block box movement
+laserBlocks = ['f','w','d']
 
 levels = []
 level = 0
-colours = []
+
 
 laserFloors = []
 selectedObject = []
@@ -56,7 +63,8 @@ for i in range(panelColumns*panelRows):
     objects[row].append(['','',''])
     # return panels
 
-panels[0][0].create_text(32,32,text=level,fill='white')
+
+
 def nextLevel(): #Reset everything and start the next level
     global level
     global laserFloors
@@ -82,7 +90,6 @@ def nextLevel(): #Reset everything and start the next level
     frozen = False
 
     level += 1
-    panels[0][0].create_text(32,32,text=level,fill='white')
     levels[level]()
 
 def freeze(): #Unbind everything to freeze the level
@@ -93,7 +100,9 @@ def freeze(): #Unbind everything to freeze the level
 
 
 def setPanel(y, x, type): #set a single panel to a solid colour object
-    panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill=objectColours[type], tags="main")
+    panels[y][x].delete("main")
+    if not type == '':
+        panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill=objectColours[type], tags="main")
     objects[y][x][0] = type
     
 
@@ -104,10 +113,17 @@ def setPanel(y, x, type): #set a single panel to a solid colour object
 #     solidColour(panels[3][i],"#367FEC")
 
 def fillRect(startCoords,endCoords,type): #Fill a rectangle of panels
-    for x in range(startCoords[1],endCoords[1]+1):
-        for y in range(startCoords[0],endCoords[0]+1):
+    xStep = 1
+    yStep = 1
+    if startCoords[1] > endCoords[1]: #If start x is more than end x, go backwards
+        xStep = -1
+    if startCoords[0] > endCoords[0]:
+        yStep = -1
+    for x in range(startCoords[1],endCoords[1]+1,xStep):
+        for y in range(startCoords[0],endCoords[0]+1,yStep):
             panels[y][x].delete("main") #Delete what is currently in the panel to not waste memory
-            panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill=objectColours[type], tags="main")
+            if not type == '':
+                panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill=objectColours[type], tags="main")
             objects[y][x][0] = type
             #panels[y][x].create_text(panelWidth/2,panelHeight/2,text=type)
 
@@ -166,7 +182,7 @@ def recieverSprite(y,x,laser,dir,colour):
     #Note: Dir will be the direction of the incoming laser, so it will be inverted from the direction of the emitter
     laserRecievers[colour] = [y,x,dir,laser]
     panels[y][x].delete("main")
-    oval = panels[y][x].create_oval(0,panelHeight/2,panelWidth,panelHeight,outline="#f62d2d",fill="#3e3e3e",width=6, tags="main")
+    oval = panels[y][x].create_oval(0,panelHeight/2,panelWidth,panelHeight,outline=laserColours[colour],fill="#3e3e3e",width=6, tags="main")
     if dir == 0 or dir == 2:
         laserdir = 'y'
     else:
@@ -214,7 +230,7 @@ def laserMove(y,x,dir):
         try:
             if (x < 0 or y < 0):
                 raise IndexError #Also raise indexerror if the coordinates go below zero
-            elif (objects[y][x][0] == "w" or objects[y][x][0] == "f"):
+            elif (objects[y][x][0] in laserBlocks):
                 if objects[y][x][0] == "f":
                     panels[y][x].delete("main") #Delete what is currently in the panel to not waste memory
                     panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill="#523B3B", tags="main")
@@ -282,8 +298,8 @@ def objectMove(event, object):
         boxSprite(y,x,flipped)
     selectedObject = [y,x]
     panels[y][x].bind("<Button-1>", objectSelect)
-    panels[0][0].delete("all")
-    panels[0][0].create_text(32,32,text=[y,x],fill="white")
+    # panels[0][0].delete("all")
+    # panels[0][0].create_text(32,32,text=[y,x],fill="white")
     if [y,x] in laserFloors:
         laserFloors.remove([y,x])
     if laserEmitter[3]:
@@ -323,6 +339,17 @@ def laserEvent(**events):
     laserEvents = events
 
 
+def leveltemplate(event = ''):
+    for y in panels:
+        for x in y:
+            x.delete('debug')
+            row = x.grid_info()["row"]
+            column = x.grid_info()["column"]
+            x.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline='white',tags='debug')
+            x.create_text(panelWidth/2,panelHeight/2,text=f"{row}, {column}",fill='white', tags='debug')
+    root.after(1000,leveltemplate)
+
+root.bind("<space>",leveltemplate)
     
 # for i in objects:
 #     print(i)

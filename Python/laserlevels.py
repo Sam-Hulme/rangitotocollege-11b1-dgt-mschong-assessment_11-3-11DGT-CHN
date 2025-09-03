@@ -11,8 +11,7 @@ def levelEnd(): #Runs when the level is completed
 
 
 def level0():
-    global colours
-    colours = [False]
+
     
     fillRect([3,2],[6,6],"f")
     fillRect([2,8],[6,8],'w')
@@ -41,11 +40,9 @@ def level0():
     for i in boxes:
         i.bind("<Button-1>", objectSelect)
 levels.append(level0)
-level0()
+# level0()
 
 def level1():
-    global colours
-    colours = [False]
 
     fillRect([5,3],[8,6],"f")
     fillRect([3,1],[8,1],"w")
@@ -76,5 +73,41 @@ def level1():
     for i in boxes:
         i.bind("<Button-1>", objectSelect)
 levels.append(level1)
+
+def level2():
+    fillRect([5,2],[5,8],"w")
+    fillRect([2,5],[3,8],"f")
+    fillRect([0,9],[8,9],"w")
+    fillRect([0,0],[9,0],"w")
+    fillRect([0,1],[0,8],'w')
+    fillRect([9,1],[9,9],"w")
+    fillRect([6,1],[8,8],'f')
+    setPanel(5,1,'d')
+
+    boxes = []
+    boxes.append(boxSprite(3,4,False))
+    boxes.append(boxSprite(8,1,True))
+
+    emitterSprite(4,8,False,3)
+    recieverSprite(1,8,False,1,'red')
+    recieverSprite(0,3,False,0,'green')
+
+    selectedObject = [5,3]
+    objectSelect(0, boxes[0])
+
+    #TODO: Change laser reciever functions to check which recievers are active every time laserMove is run.
+
+    laserEvent(
+        red = levelEnd,
+        green = lambda: setPanel(5,1,'') 
+        #Put functions for different colours here
+    )
+
+
+    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
+    for i in boxes:
+        i.bind("<Button-1>", objectSelect)
+levels.append(level2)
+level2()
 
 root.mainloop()
