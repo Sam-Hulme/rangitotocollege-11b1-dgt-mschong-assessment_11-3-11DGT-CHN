@@ -23,6 +23,7 @@ def doorOpen(reverse,y,x):
         #     print("door closed")
         # else:
         #     print("already closed")
+    panels[y][x].tag_raise('frame')
 
 def level0():
 
@@ -51,7 +52,7 @@ def level0():
         
 
     root.bind("<Key>",lambda event: objectMove(event, selectedObject))
-    for i in boxes:
+    for i in boxes: 
         i.bind("<Button-1>", objectSelect)
 levels.append(level0)
 level0()
@@ -96,7 +97,9 @@ def level2():
     fillRect([0,1],[0,8],'w')
     fillRect([9,1],[9,9],"w")
     fillRect([6,1],[8,8],'f')
-    setPanel(5,1,'d')
+
+    doors = []
+    doors.append(setPanel(5,1,'d'))
 
     boxes = []
     boxes.append(boxSprite(3,4,False))
@@ -109,9 +112,8 @@ def level2():
     selectedObject = [5,3]
     objectSelect(0, boxes[0])
 
-    
 
-    laserEvent(
+    laserEvent(doors,
         red = levelEnd,
         green = lambda reverse: doorOpen(reverse,5,1)
         #Put functions for different colours here
@@ -128,10 +130,12 @@ def level3():
     fillRect([1,1],[8,8],'')
     fillRect([2,1],[2,2],'w')
     fillRect([1,4],[2,4],'w')
-    setPanel(2,3,'d')
-    setPanel(1,8,'d')
     fillRect([2,5],[2,7],'w')
     fillRect([3,1],[8,1],'f')
+
+    doors = []
+    doors.append(setPanel(2,3,'d'))
+    doors.append(setPanel(1,8,'d'))
     
     boxes = []
     boxes.append(prismSprite(1,2,0))
@@ -144,12 +148,11 @@ def level3():
     recieverSprite(1,5,False,3,'blue')
 
 
-    laserEvent(
+    laserEvent(doors,
         red = lambda reverse: doorOpen(reverse,2,3),
         green = lambda reverse: doorOpen(reverse,1,8),
         blue = levelEnd
     )
-
 
 
     selectedObject = [5,5]

@@ -21,6 +21,11 @@ laserColours = {
     'green': "#37EA0A",
     'blue': "#203AFF"
 }
+frameColours = { #Darker colours for frames which look less out of place on doors.
+    'red': "#971f1f",
+    'green': "#259509",
+    'blue': "#142394"
+}
 """
     w = Wall,
     f = floor,
@@ -105,6 +110,7 @@ def setPanel(y, x, type): #set a single panel to a solid colour object
     if not type == '':
         panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill=objectColours[type], tags="main")
     objects[y][x][0] = type
+    return panels[y][x]
     
 
 # for i in range(3,9):
@@ -383,15 +389,21 @@ def selectIndicator():
     y = selectedObject[0]
     panels[y][x].delete('selected')
     panels[y][x].create_rectangle(0,0,panelWidth,panelHeight, outline="green", width=16, fill='', tags='selected') #Empty fill to make it only an outline
+    panels[y][x].tag_raise('frame')
     
 def selectAnimation(y,x):
     global selectLoopFrames
     #TODO: make animation for selected object frame
     
 
-def laserEvent(**events):
+def laserEvent(doors = [], **events):
     global laserEvents
     laserEvents = events
+    for c, i in zip(laserEvents.keys(), doors): 
+        #Iterate over the keys of laserEvents (the colour of each reciever), and doors (each door)
+        #This stops when the shortest iterable ends, which should always be doors because at least one reciever ends the level rather than opening a door
+        doorFrame(i,c)
+    
 
 
 def leveltemplate(event = ''):
@@ -405,6 +417,16 @@ def leveltemplate(event = ''):
     root.after(1000,leveltemplate)
 
 root.bind("<space>",leveltemplate)
+
+def doorFrame(panel,colour):
+    # print(f"creating frame for {colour} door")
+    try:
+        outline = frameColours[colour]
+    except KeyError:
+        outline = '#000000'
+    panel.delete('frame')
+    panel.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline=outline,width=8,tags='frame')
+
     
 # for i in objects:
 #     print(i)
