@@ -4,11 +4,25 @@ from laser import *
 
 
 
-def levelEnd(): #Runs when the level is completed
+def levelEnd(inactive = False): #Runs when the level is completed
+    if inactive:
+        return #If the emitter is not active, dont run
     freeze()
     root.after(2000,nextLevel)
 
-
+def doorOpen(reverse,y,x):
+    if not reverse:
+        if (objects[y][x][0] == 'd'):
+            setPanel(y,x,'')
+        #     print("door opened") 
+        # else:
+        #     print("already open")
+    else:
+        if (objects[y][x][0] == ''):
+            setPanel(y,x,'d')
+        #     print("door closed")
+        # else:
+        #     print("already closed")
 
 def level0():
 
@@ -40,7 +54,7 @@ def level0():
     for i in boxes:
         i.bind("<Button-1>", objectSelect)
 levels.append(level0)
-# level0()
+level0()
 
 def level1():
 
@@ -95,11 +109,11 @@ def level2():
     selectedObject = [5,3]
     objectSelect(0, boxes[0])
 
-    #TODO: Change laser reciever functions to check which recievers are active every time laserMove is run.
+    
 
     laserEvent(
         red = levelEnd,
-        green = lambda: setPanel(5,1,'') 
+        green = lambda reverse: doorOpen(reverse,5,1)
         #Put functions for different colours here
     )
 
@@ -108,6 +122,43 @@ def level2():
     for i in boxes:
         i.bind("<Button-1>", objectSelect)
 levels.append(level2)
-level2()
 
-root.mainloop()
+def level3():
+    fillRect([0,0],[9,9],'w')
+    fillRect([1,1],[8,8],'')
+    fillRect([2,1],[2,2],'w')
+    fillRect([1,4],[2,4],'w')
+    setPanel(2,3,'d')
+    setPanel(1,8,'d')
+    fillRect([2,5],[2,7],'w')
+    fillRect([3,1],[8,1],'f')
+    
+    boxes = []
+    boxes.append(prismSprite(1,2,0))
+    boxes.append(boxSprite(5,5,False))
+    boxes.append(boxSprite(7,3,True))
+    boxes.append(boxSprite(1,6,False))
+    emitterSprite(9,5,False,0)
+    recieverSprite(0,3,False,0,'green')
+    recieverSprite(6,9,False,1,'red')
+    recieverSprite(1,5,False,3,'blue')
+
+
+    laserEvent(
+        red = lambda reverse: doorOpen(reverse,2,3),
+        green = lambda reverse: doorOpen(reverse,1,8),
+        blue = levelEnd
+    )
+
+
+
+    selectedObject = [5,5]
+    objectSelect(0, boxes[1])
+
+    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
+    for i in boxes:
+        i.bind("<Button-1>", objectSelect)
+levels.append(level3)
+
+
+root.mainloop() #Ensure all functions are defined before this is run.
