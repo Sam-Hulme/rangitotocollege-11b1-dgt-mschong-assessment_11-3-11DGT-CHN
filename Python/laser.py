@@ -16,6 +16,7 @@ objectColours = { # A dictionary of the colours of solid colour objects
     "f": "#555555",
     "d": "#F3C873" #TODO: Add proper sprite for doors
 }
+objectSprites = {} #This dictionary is filled after functions are defined to avoid errors.
 laserColours = {
     'red': "#f62d2d",
     'green': "#37EA0A",
@@ -36,7 +37,7 @@ frameColours = { #Darker colours for frames which look less out of place on door
     r = reciever,
     d = door
 """
-boxBlocks = ['b','w','e','r','d','p'] #Objects that block box movement
+boxBlocks = ['b','w','e','r','d','p','g'] #Objects that block box movement
 laserBlocks = ['f','w','d']
 
 levels = []
@@ -85,7 +86,7 @@ def nextLevel(): #Reset everything and start the next level
         for x in range(10):
             panels[y][x].delete("all") #Clear all panels in the level
             objects[y][x] = ['','',''] #Reset object array
-    root.unbind_all("<Button-1>")
+            panels[y][x].unbind("<Button-1>")
     root.unbind_all("<Key>")
     laserFloors = [] #Reset all variables
     laserData = laserData = [[0,0,0,False],[0,0,0,False]]
@@ -101,7 +102,6 @@ def nextLevel(): #Reset everything and start the next level
 def freeze(): #Unbind everything to freeze the level
     global frozen
     root.unbind_all("<Key>")
-    root.unbind_all("<Button-1>")
     frozen = True
 
 
@@ -119,7 +119,7 @@ def setPanel(y, x, type): #set a single panel to a solid colour object
 # for i in range(2,8):
 #     solidColour(panels[3][i],"#367FEC")
 
-def fillRect(startCoords,endCoords,type): #Fill a rectangle of panels
+def fillRect(startCoords,endCoords,type,**data): #Fill a rectangle of panels
     xStep = 1
     yStep = 1
     if startCoords[1] > endCoords[1]: #If start x is more than end x, go backwards
@@ -129,14 +129,21 @@ def fillRect(startCoords,endCoords,type): #Fill a rectangle of panels
     for x in range(startCoords[1],endCoords[1]+1,xStep):
         for y in range(startCoords[0],endCoords[0]+1,yStep):
             panels[y][x].delete("main") #Delete what is currently in the panel to not waste memory
-            if not type == '':
+            if type in objectColours.keys():
                 panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill=objectColours[type], tags="main")
+            elif not type == '':
+                objectSprites[type](y,x,**data)
             objects[y][x][0] = type
             #panels[y][x].create_text(panelWidth/2,panelHeight/2,text=type)
 
 
 
-def boxSprite(y,x,flipped):
+def boxSprite(y,x,**data):
+    '''
+    data:
+    flipped (bool)
+    '''
+    flipped = data['flipped'] #Object data (direction, colour, ect) is passed through **kwargs so that fillRect can work for all of them
     panels[y][x].delete("main")
     panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,outline="#787FB6",width=8,fill="#171717", tags="main")
     startX = panelWidth/4.5
@@ -151,7 +158,12 @@ def boxSprite(y,x,flipped):
     objects[y][x][1] = flipped
     return panels[y][x]
 
-def prismSprite(y,x,dir):
+def prismSprite(y,x,**data):
+    '''
+    data:
+    dir (int)
+    '''
+    dir = data['dir']
     panels[y][x].delete("main")
     panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,outline="#EE78EE",width=8,fill="#3C3C3C", tags='main')
     w = panelWidth
@@ -174,7 +186,40 @@ def prismSprite(y,x,dir):
     #One point should be half way across and a third down. The other two should be two thirds down and at opisote thirds
     return panels[y][x]
 
-def laserSprite(x,y,rot,emitter = False):
+def glassSprite(y,x,**data):
+    '''
+    data:
+    laser (bool)
+    '''
+    if 'laser' in data:
+        laser = data['laser']
+    else:
+        laser = False
+    if not laser:
+        panels[y][x].delete('main')
+        objects[y][x] = ['','','']
+    panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill='',outline='#EEEEEE',width=8,tags='main')
+    w = panelWidth/9
+    h = panelHeight/9
+
+    panels[y][x].create_line(w*2,h,w,h*2,width=4,fill='#EEEEEE',tags='main')
+    panels[y][x].create_line(panelWidth-w*2,panelHeight-h,panelWidth-w,panelHeight-w*2,width=4,fill='#EEEEEE',tags='main')
+    objects[y][x][0] = 'g'
+
+def laserSprite(x,y,**data):
+    '''
+    data:
+    emitter (bool),
+    rot (string)
+    '''
+    rot = data['rot']
+    try:
+        emitter = data['emitter']
+    except KeyError:
+        emitter = False
+    glass = False
+    if objects[y][x][0] == 'g': 
+        glass = True
     if not emitter and not objects[y][x][0] == 'l': 
         panels[y][x].delete("main") #Don't delete the emitter sprite or the sprite of other lasers (if laser goes over itself)
         objects[y][x][0] = "l"
@@ -196,33 +241,54 @@ def laserSprite(x,y,rot,emitter = False):
             endX = panelWidth*0.75
     panels[y][x].create_line(startX,startY,endX,endY,width=dir/3.2,fill="#FF6A6A", tags="main")
     panels[y][x].create_line(startX,startY,endX,endY,width=dir/(64/12),fill="#d10202", tags="main")
+    if glass:
+        glassSprite(y,x,laser=True)
 
-def emitterSprite(y,x,active,dir): #As with most things, 0 = up, 1 = right, 2 = down, and 3 = left
+def emitterSprite(y,x,**data): #As with most things, 0 = up, 1 = right, 2 = down, and 3 = left
+    '''
+    data:
+    active (bool),
+    dir (int)
+    '''
+    if 'active' in data:
+        active = data['active']
+    else:
+        active = False
+    dir = data['dir']
     #TODO: make versions of emitter and reciever sprites at different orientations
     panels[y][x].delete("main") 
     panels[y][x].create_oval(0,panelHeight/2,panelWidth,panelHeight,outline="#b0b0b0",fill="#3e3e3e",width=6, tags="main")
     panels[y][x].unbind("<Button-1>")
     if (active == True):
-        laserSprite(x,y,"y",True)
+        laserSprite(x,y,rot="y",emitter=True)
     objects[y][x][0] = "e"
     objects[y][x][1] = dir
     panels[y][x].bind("<Button-1>", lambda event: laserMove(y,x,dir))
 
-def recieverSprite(y,x,laser,dir,colour):
+def recieverSprite(y,x,**data): 
+    '''
+    data:
+    laser (bool),
+    dir (int),
+    colour (string)
+    '''
+    laser = data['laser']
+    dir = data['dir']
+    colour = data['colour']
     #Note: Dir will be the direction of the incoming laser, so it will be inverted from the direction of the emitter
     laserRecievers[colour] = [y,x,dir,laser]
     panels[y][x].delete("main")
     try:
         outline = laserColours[colour]
     except KeyError:
-        outline = "#000000" #If the colour is not yet set in the dictionary, use a placeholder
+        outline = "#FFFFFF" #If the colour is not yet set in the dictionary, use a placeholder
     oval = panels[y][x].create_oval(0,panelHeight/2,panelWidth,panelHeight,outline=outline,fill="#3e3e3e",width=6, tags="main")
     if dir == 0 or dir == 2:
         laserdir = 'y'
     else:
         laserdir = 'x'
     if (laser):
-        laserSprite(x,y,laserdir,True)
+        laserSprite(x,y,rot=laserdir,emitter=True)
         panels[y][x].itemconfig(oval, fill="#f88080")
     objects[y][x][0] = 'r'
     objects[y][x][1] = dir
@@ -232,7 +298,7 @@ def recieverSprite(y,x,laser,dir,colour):
 def laserMove(y,x,dir,split = False, first = False):
     if first or not split:
         for c, i in laserRecievers.items():
-            recieverSprite(i[0],i[1],False,i[2],c)
+            recieverSprite(i[0],i[1],laser=False,dir=i[2],colour=c)
             # print(f"Resetting '{c}' laser")
             # if not i[3]: #If emitter is not active
             try: 
@@ -242,14 +308,20 @@ def laserMove(y,x,dir,split = False, first = False):
     if not split: #Split is true if the laser has been split from a prism. This deletes lasers differently
         yLoop = 0
         xLoop = 0
-        emitterSprite(y,x,True,dir)
+        emitterSprite(y,x,active=True,dir=dir)
         global laserEmitter
         laserEmitter = [y,x,dir,True]
         for l in objects: #Iterate over existing lasers to remove them
             for i in l:
-                if i[0] == "l":
+                if i[0] == "l" or i[0] == 'g':
                     panels[yLoop][xLoop].delete("main")
+                    if i[0] == 'g':
+                        glass = True
+                    else:
+                        glass = False
                     objects[yLoop][xLoop] = ['','','']
+                    if glass:
+                        glassSprite(yLoop,xLoop)
                 xLoop += 1
             xLoop = 0    
             yLoop += 1
@@ -290,12 +362,13 @@ def laserMove(y,x,dir,split = False, first = False):
                     if dir > 3:
                         dir = 0
             elif (objects[y][x][0] == 'r'): 
-                recieverSprite(y,x,True,dir,objects[y][x][2])
-                # print(f"{objects[y][x][2]} reciever active")
-                try:
-                    laserEvents[objects[y][x][2]](False)
-                except KeyError:
-                    print(f"ERROR: '{objects[y][x][2]}' reciever has no set function.")
+                if (objects[y][x][1] == dir):
+                    recieverSprite(y,x,laser=True,dir=dir,colour=objects[y][x][2])
+                    # print(f"{objects[y][x][2]} reciever active")
+                    try:
+                        laserEvents[objects[y][x][2]](False)
+                    except KeyError:
+                        print(f"ERROR: '{objects[y][x][2]}' reciever has no set function.")
                 break
             elif (objects[y][x][0] == 'p'):
                 if objects[y][x][1] == dir:
@@ -310,7 +383,7 @@ def laserMove(y,x,dir,split = False, first = False):
                     laserMove(y,x,dir,True)
                 break
             else:
-                laserSprite(x,y,rot)
+                laserSprite(x,y,rot=rot)
             #panels[y][x].create_text(panelWidth/2, panelHeight/2, text=dir) #Debug code to check the direction of lasers
         except IndexError:
             break #If it tries to check a panel outside the range, which means it has left the screen and should stop.
@@ -353,10 +426,7 @@ def objectMove(event, object):
     if objects[y][x][0] in boxBlocks: 
         y = selectedObject[0]
         x = selectedObject[1] #Revert movement, making functions below replace existing box that was removed above.
-    if (type == "b"):
-        boxSprite(y,x,dir)
-    elif type == 'p':
-        prismSprite(y,x,dir)
+    objectSprites[type](y,x,flipped=dir,dir=dir)
     selectedObject = [y,x]
     panels[y][x].bind("<Button-1>", objectSelect)
     # panels[0][0].delete("all")
@@ -381,6 +451,7 @@ def objectSelect(event, object = 0):
         old = panels[selectedObject[0]][selectedObject[1]]
         old.delete('selected') #Delete the border from the old panel
     selectedObject = [y,x]
+    # print(f"object at {y},{x} selected")
     selectIndicator()
 
 def selectIndicator():
@@ -427,7 +498,14 @@ def doorFrame(panel,colour):
     panel.delete('frame')
     panel.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline=outline,width=8,tags='frame')
 
-    
+objectSprites = {
+    'b': boxSprite,
+    'p': prismSprite,
+    'g': glassSprite,
+    'l': laserSprite,
+    'r': recieverSprite,
+    'e': emitterSprite
+}
 # for i in objects:
 #     print(i)
 

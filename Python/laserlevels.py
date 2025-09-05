@@ -34,10 +34,10 @@ def level0():
     # setPanel(2,5,'w')
 
     boxes = []
-    boxes.append(boxSprite(2,7,False))
+    boxes.append(boxSprite(2,7,flipped=False))
 
-    emitterSprite(6,7,False,0)
-    recieverSprite(2,2,False,3,'red')
+    emitterSprite(6,7,active=False,dir=0)
+    recieverSprite(2,2,laser=False,dir=3,colour='red')
 
     selectedObject = [2,7]
     objectSelect(0, boxes[0])
@@ -55,7 +55,7 @@ def level0():
     for i in boxes: 
         i.bind("<Button-1>", objectSelect)
 levels.append(level0)
-level0()
+# level0()
 
 def level1():
 
@@ -65,13 +65,13 @@ def level1():
     fillRect([3,2],[3,7],"w")
 
     boxes = []
-    boxes.append(boxSprite(4,7,False))
-    boxes.append(boxSprite(5,3,True))
+    boxes.append(boxSprite(4,7,flipped=False))
+    boxes.append(boxSprite(5,3,flipped=True))
     # boxes.append(boxSprite(6,5,False))
     # boxes.append(boxSprite(6,6,True))
 
-    emitterSprite(8,7,False,0)
-    recieverSprite(8,2,False,2,'red')
+    emitterSprite(8,7,active=False,dir=0)
+    recieverSprite(8,2,laser=False,dir=2,colour='red')
 
 
     selectedObject = [5,3]
@@ -102,20 +102,20 @@ def level2():
     doors.append(setPanel(5,1,'d'))
 
     boxes = []
-    boxes.append(boxSprite(3,4,False))
-    boxes.append(boxSprite(8,1,True))
+    boxes.append(boxSprite(3,4,flipped=False))
+    boxes.append(boxSprite(8,1,flipped=True))
 
-    emitterSprite(4,8,False,3)
-    recieverSprite(1,8,False,1,'red')
-    recieverSprite(0,3,False,0,'green')
+    emitterSprite(4,8,active=False,dir=3)
+    recieverSprite(1,8,laser=False,dir=1,colour='red')
+    recieverSprite(0,3,laser=False,dir=0,colour='green')
 
-    selectedObject = [5,3]
+    selectedObject = [3,4]
     objectSelect(0, boxes[0])
 
 
     laserEvent(doors,
-        red = levelEnd,
-        green = lambda reverse: doorOpen(reverse,5,1)
+        green = lambda reverse: doorOpen(reverse,5,1),
+        red = levelEnd
         #Put functions for different colours here
     )
 
@@ -132,20 +132,22 @@ def level3():
     fillRect([1,4],[2,4],'w')
     fillRect([2,5],[2,7],'w')
     fillRect([3,1],[8,1],'f')
+    fillRect([3,5],[5,5],'w')
+    glassSprite(2,8)
 
     doors = []
     doors.append(setPanel(2,3,'d'))
     doors.append(setPanel(1,8,'d'))
     
     boxes = []
-    boxes.append(prismSprite(1,2,0))
-    boxes.append(boxSprite(5,5,False))
-    boxes.append(boxSprite(7,3,True))
-    boxes.append(boxSprite(1,6,False))
-    emitterSprite(9,5,False,0)
-    recieverSprite(0,3,False,0,'green')
-    recieverSprite(6,9,False,1,'red')
-    recieverSprite(1,5,False,3,'blue')
+    boxes.append(prismSprite(1,2,dir=0))
+    boxes.append(boxSprite(1,1,flipped=False))
+    boxes.append(boxSprite(7,3,flipped=True))
+    boxes.append(boxSprite(1,6,flipped=False))
+    emitterSprite(9,5,active=False,dir=0)
+    recieverSprite(0,3,laser=False,dir=0,colour='green')
+    recieverSprite(6,9,laser=False,dir=1,colour='red')
+    recieverSprite(1,5,laser=False,dir=3,colour='blue')
 
 
     laserEvent(doors,
@@ -155,13 +157,37 @@ def level3():
     )
 
 
-    selectedObject = [5,5]
-    objectSelect(0, boxes[1])
+    selectedObject = [7,3]
+    objectSelect(0, boxes[2])
 
     root.bind("<Key>",lambda event: objectMove(event, selectedObject))
     for i in boxes:
         i.bind("<Button-1>", objectSelect)
 levels.append(level3)
+
+def level4():
+    fillRect([0,0],[9,9],'w')
+    fillRect([1,1],[8,9],'')
+    fillRect([1,5],[8,5],'g')
+    fillRect([4,6],[4,9],'f')
+    fillRect([4,1],[4,4],'d')
+
+    boxes = []
+    boxes.append(boxSprite(5,9,flipped=False))
+    boxes.append(prismSprite(5,1,dir=3))
+    emitterSprite(8,8,dir=0)
+    recieverSprite(8,2,laser=False,dir=2,colour='red')
+    recieverSprite(2,8,laser=False,dir=0,colour="green")
+
+
+
+    selectedObject = [5,9]
+    objectSelect(0, boxes[0])
+
+    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
+    for i in boxes:
+        i.bind("<Button-1>", objectSelect)
+level4()
 
 
 root.mainloop() #Ensure all functions are defined before this is run.
