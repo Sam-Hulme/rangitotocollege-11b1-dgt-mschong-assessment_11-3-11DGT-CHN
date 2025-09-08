@@ -35,7 +35,8 @@ frameColours = { #Darker colours for frames which look less out of place on door
     l = laser,
     e = emitter,
     r = reciever,
-    d = door
+    d = door,
+    p = prism
 """
 boxBlocks = ['b','w','e','r','d','p','g'] #Objects that block box movement
 laserBlocks = ['f','w','d']
@@ -120,6 +121,7 @@ def setPanel(y, x, type): #set a single panel to a solid colour object
 #     solidColour(panels[3][i],"#367FEC")
 
 def fillRect(startCoords,endCoords,type,**data): #Fill a rectangle of panels
+    objectsCreated = []
     xStep = 1
     yStep = 1
     if startCoords[1] > endCoords[1]: #If start x is more than end x, go backwards
@@ -134,6 +136,8 @@ def fillRect(startCoords,endCoords,type,**data): #Fill a rectangle of panels
             elif not type == '':
                 objectSprites[type](y,x,**data)
             objects[y][x][0] = type
+            objectsCreated.append(panels[y][x])
+    return objectsCreated
             #panels[y][x].create_text(panelWidth/2,panelHeight/2,text=type)
 
 
@@ -494,9 +498,12 @@ def doorFrame(panel,colour):
     try:
         outline = frameColours[colour]
     except KeyError:
-        outline = '#000000'
-    panel.delete('frame')
-    panel.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline=outline,width=8,tags='frame')
+        outline = "#FFFFFF"
+    if not type(panel) == list:
+        panel = list(panel)
+    for i in panel:
+        i.delete('frame')
+        i.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline=outline,width=8,tags='frame')
 
 objectSprites = {
     'b': boxSprite,

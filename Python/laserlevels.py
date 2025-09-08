@@ -1,6 +1,7 @@
 import tkinter
 from tkinter import *
 from laser import *
+import random
 
 
 
@@ -125,7 +126,46 @@ def level2():
         i.bind("<Button-1>", objectSelect)
 levels.append(level2)
 
+
 def level3():
+    fillRect([0,0],[9,9],'w')
+    fillRect([1,1],[8,9],'')
+    fillRect([1,5],[8,5],'g')
+    fillRect([1,6],[3,7],'f')
+    fillRect([1,8],[8,8],'g')
+
+    doors = []
+    doors.append(fillRect([4,1],[4,4],'d'))
+
+    boxes = []
+    boxes.append(boxSprite(4,7,flipped=False))
+    boxes.append(boxSprite(5,1,flipped=True))
+    boxes.append(boxSprite(3,2,flipped=False))
+    boxes.append(boxSprite(7,9,flipped=True))
+    
+    emitterSprite(8,7,dir=0)
+    recieverSprite(8,2,laser=False,dir=2,colour='red')
+    recieverSprite(1,9,laser=False,dir=0,colour="green") 
+
+    def red(reverse):
+        for i in range(5):
+            doorOpen(reverse,4,i)
+
+    laserEvent(doors,
+       red = lambda reverse: red(reverse),
+       green = levelEnd  
+    )
+
+    selectedObject = [5,9]
+    objectSelect(0, boxes[0])
+
+    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
+    for i in boxes:
+        i.bind("<Button-1>", objectSelect)
+levels.append(level3)
+level3()
+
+def level4():
     fillRect([0,0],[9,9],'w')
     fillRect([1,1],[8,8],'')
     fillRect([2,1],[2,2],'w')
@@ -163,31 +203,21 @@ def level3():
     root.bind("<Key>",lambda event: objectMove(event, selectedObject))
     for i in boxes:
         i.bind("<Button-1>", objectSelect)
-levels.append(level3)
+levels.append(level4)
 
-def level4():
-    fillRect([0,0],[9,9],'w')
-    fillRect([1,1],[8,9],'')
-    fillRect([1,5],[8,5],'g')
-    fillRect([4,6],[4,9],'f')
-    fillRect([4,1],[4,4],'d')
-
-    boxes = []
-    boxes.append(boxSprite(5,9,flipped=False))
-    boxes.append(prismSprite(5,1,dir=3))
-    emitterSprite(8,8,dir=0)
-    recieverSprite(8,2,laser=False,dir=2,colour='red')
-    recieverSprite(2,8,laser=False,dir=0,colour="green")
+def level5():
+    possibleTiles = ['','w','f','b','p','e','r','d','l']
+    for a in panels:
+        for b in a:
+            coords = b.grid_info()
+            y = coords['row']
+            x = coords['column']
+            tile = random.choice(possibleTiles)
+            fillRect([y,x],[y,x],tile,dir=0,flipped=False,laser=False,emitter=False,rot='y',active=False,colour='none')
+            
 
 
 
-    selectedObject = [5,9]
-    objectSelect(0, boxes[0])
-
-    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
-    for i in boxes:
-        i.bind("<Button-1>", objectSelect)
-level4()
 
 
 root.mainloop() #Ensure all functions are defined before this is run.
