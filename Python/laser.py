@@ -1,16 +1,7 @@
-import tkinter
 from tkinter import *
+from core import *
 
-root = tkinter.Tk()
-root.configure(bg='red')
 
-#This game uses a panel system for elements, with a grid of canvases that can be modified to have images or solid colours displayed.
-panelColumns = 10
-panelRows = 10
-panelWidth = 64 #These values can be adjusted and everything will be resized accordingly.
-panelHeight = 64
-panels = [[]] #The canvases themselves that will be drawn to to show sprites.
-objects = [[]] #A grid of empty strings that will be filled to reflect the types of objects at each location
 objectColours = { # A dictionary of the colours of solid colour objects
     "w":"#367FEC",
     "f": "#555555",
@@ -58,19 +49,8 @@ selectLoopFrames = 0
 #     for a in panels:
 #         for i in a:
 #             i.destroy() #Destroy existing panels (if the function is run multiple times)
-for i in range(panelColumns*panelRows):
-    row = len(panels)-1
-    if (len(panels[row])+1 > panelColumns): #if the current row list would have more items than the desired column count, move to the next row
-        panels.append([])
-        objects.append([])
-    row = len(panels)-1
-    column = len(panels[row])
-    panel = Canvas(root, width=panelWidth, height=panelHeight, bg="black", highlightthickness=0, bd=0)
-    panel.grid(row=row, column=column)
-    panels[row].append(panel) #Add all panels to a list (so they can be iterated through)
-    objects[row].append(['','',''])
-    # return panels
-
+init(columns=10,rows=10,width=64,height=64)
+from core import panelWidth, panelHeight
 
 
 def nextLevel(): #Reset everything and start the next level
@@ -173,16 +153,38 @@ def prismSprite(y,x,**data):
     w = panelWidth
     h = panelHeight
     scale = 4
-    x1 = w/2
-    y1 = h/scale
-    x2 = w/scale
-    x3 = w-w/scale
-    y2 = h-h/scale
-    y3 = h-h/scale
+    xq1 = w/scale #x quarter 1
+    xq2 = w/2
+    xq3 = w-w/scale
+    yq1 = h/scale
+    yq2 = h/2
+    yq3 = h-h/scale
+
+
+    x1 = xq2 #Half way across
+    y1 = yq1 #A quarter down
+
+    x2 = xq1 #A quarter across
+    y2 = yq3 #3 quarters down
+
+    x3 = xq3 #3 quarters across
+    y3 = yq3 #3 quarters down
     if (dir == 2):
         y2 = h/scale
         y3 = h/scale
         y1 = h-h/scale
+    elif dir == 1:
+        x1 = xq1
+        x3 = xq3
+        y3 = yq2
+    elif dir == 3:
+        x1 = xq3
+        x2 = xq3
+        y3 = xq2
+        x3 = xq1
+
+    # elif dir == 1:
+    #     x1 = 
     panels[y][x].create_polygon(x1,y1,x2,y2,x3,y3, fill="#A7A7A7",tags='main')
     objects[y][x][2] = objects[y][x][0]
     objects[y][x][0] = 'p'
@@ -379,11 +381,14 @@ def laserMove(y,x,dir,split = False, first = False):
                     dir += 1
                     if dir > 3:
                         dir = 0
+                    oldDir = dir
                     laserMove(y,x,dir,True,True)
                     for i in range(2):
                         dir -= 1
                         if dir < 0:
                             dir = 3
+                    laserMove(y,x,dir,True)
+                    dir = oldDir
                     laserMove(y,x,dir,True)
                 break
             else:
@@ -481,18 +486,6 @@ def laserEvent(doors = [], **events):
     
 
 
-def leveltemplate(event = ''):
-    for y in panels:
-        for x in y:
-            x.delete('debug')
-            row = x.grid_info()["row"]
-            column = x.grid_info()["column"]
-            x.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline='white',tags='debug')
-            x.create_text(panelWidth/2,panelHeight/2,text=f"{row}, {column}",fill='white', tags='debug')
-    root.after(1000,leveltemplate)
-
-root.bind("<space>",leveltemplate)
-
 def doorFrame(panel,colour):
     # print(f"creating frame for {colour} door")
     try:
@@ -500,7 +493,8 @@ def doorFrame(panel,colour):
     except KeyError:
         outline = "#FFFFFF"
     if not type(panel) == list:
-        panel = list(panel)
+        panel = [panel]
+
     for i in panel:
         i.delete('frame')
         i.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline=outline,width=8,tags='frame')
