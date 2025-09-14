@@ -1,7 +1,7 @@
+'''A file imported by the actual games that creates the panels and defines basic variables.'''
+
 import tkinter
 from tkinter import *
-
-'''A file imported by the actual games that creates the panels and defines basic variables.'''
 
 root = tkinter.Tk()
 root.configure(bg='black')

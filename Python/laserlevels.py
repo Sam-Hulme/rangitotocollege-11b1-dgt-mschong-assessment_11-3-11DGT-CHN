@@ -1,3 +1,4 @@
+'''The actual level design that imports and calls functions from the laser file.'''
 import tkinter
 from tkinter import *
 from laser import *
@@ -35,7 +36,7 @@ def doorRect(reverse,start,end):
             doorOpen(reverse,y,x)
 
 def level0():
-
+    '''Basic laser and box reflection intro.'''
     
     fillRect([3,2],[6,6],"f")
     fillRect([2,8],[6,8],'w')
@@ -67,6 +68,7 @@ levels.append(level0)
 # level0()
 
 def level1():
+    '''Moving boxes intro.'''
 
     fillRect([5,3],[8,6],"f")
     fillRect([3,1],[8,1],"w")
@@ -99,6 +101,7 @@ def level1():
 levels.append(level1)
 
 def level2():
+    '''Doors intro'''
     fillRect([5,2],[5,8],"w")
     fillRect([2,5],[3,8],"f")
     fillRect([0,9],[8,9],"w")
@@ -136,6 +139,7 @@ levels.append(level2)
 
 
 def level3():
+    '''Glass intro'''
     fillRect([0,0],[9,9],'w')
     fillRect([1,1],[8,9],'')
     fillRect([1,5],[8,5],'g')
@@ -173,6 +177,7 @@ def level3():
 levels.append(level3)
 
 def level4():
+    '''Prism intro'''
     fillRect([0,0],[9,9],'w')
     fillRect([1,1],[8,8],'')
     fillRect([2,1],[2,2],'w')
@@ -223,9 +228,11 @@ levels.append(level4)
 #             fillRect([y,x],[y,x],tile,dir=0,flipped=False,laser=False,emitter=False,rot='y',active=False,colour='none')
             
 def level5():
+    '''Advanced prisms'''
     fillRect([0,0],[9,9],'w')
     fillRect([1,1],[8,8],'')
     fillRect([7,5],[8,5],'w')
+    fillRect([4,1],[8,1],'f')
     setPanel(3,5,'w')
     setPanel(1,0,'')
     
@@ -236,8 +243,8 @@ def level5():
     doors.append(fillRect([1,5],[2,5],'d'))
     doors.append(fillRect([3,6],[3,8],'d'))
     doors.append(fillRect([3,1],[3,4],'d'))
-    doors.append(fillRect([4,5],[6,5],'d'))
     doors.append(setPanel(2,0,'d'))
+    doors.append(fillRect([4,5],[6,5],'d'))
 
 
     boxes = []
@@ -249,9 +256,9 @@ def level5():
     emitterSprite(5,9,active=False,dir=3)
     recieverSprite(1,8,laser=False,dir=1,colour='green')
     recieverSprite(9,7,laser=False,dir=2,colour='blue')
-    recieverSprite(1,1,laser=False,dir=3,colour='purple')
     recieverSprite(0,3,laser=False,dir=0,colour='yellow')
-    recieverSprite(9,3,laser=False,dir=3,colour='orange')
+    recieverSprite(1,1,laser=False,dir=3,colour='purple')
+    recieverSprite(9,3,laser=False,dir=2,colour='orange')
     recieverSprite(7,9,laser=False,dir=1,colour='red')
 
 
@@ -274,9 +281,12 @@ def level5():
     root.bind("<Key>",lambda event: objectMove(event, selectedObject))
     for i in boxes:
         i.bind("<Button-1>", objectSelect)
-
+levels.append(level5)
 level5()
 
+# def level6():
+#     setPanel(0,0,'w')
+# level6()
 
 
 root.mainloop() #Ensure all functions are defined before this is run.

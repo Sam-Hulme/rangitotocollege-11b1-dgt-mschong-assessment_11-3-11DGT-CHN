@@ -1,6 +1,8 @@
+'''All the functions and variables for the laser game'''
 from tkinter import *
 from core import *
 
+root.title("Laser")
 
 objectColours = { # A dictionary of the colours of solid colour objects
     "w":"#367FEC",
@@ -11,12 +13,18 @@ objectSprites = {} #This dictionary is filled after functions are defined to avo
 laserColours = {
     'red': "#f62d2d",
     'green': "#37EA0A",
-    'blue': "#203AFF"
+    'blue': "#203AFF",
+    'yellow': "#F2EB1E",
+    'purple': "#C41EF2",
+    'orange': "#F87219"
 }
 frameColours = { #Darker colours for frames which look less out of place on doors.
     'red': "#971f1f",
     'green': "#259509",
-    'blue': "#142394"
+    'blue': "#142394",
+    'yellow': "#B39B16",
+    'purple': "#821A9F",
+    'orange': "#B65218"
 }
 """
     w = Wall,
@@ -70,7 +78,7 @@ def nextLevel(): #Reset everything and start the next level
             panels[y][x].unbind("<Button-1>")
     root.unbind_all("<Key>")
     laserFloors = [] #Reset all variables
-    laserData = laserData = [[0,0,0,False],[0,0,0,False]]
+    laserData = [[0,0,0,False],[0,0,0,False]]
     selectedObject = []
     laserEmitter = [0,0,0,False]
     laserRecievers = {}
@@ -382,7 +390,10 @@ def laserMove(y,x,dir,split = False, first = False):
                     if dir > 3:
                         dir = 0
                     oldDir = dir
-                    laserMove(y,x,dir,True,True)
+                    if not split:
+                        laserMove(y,x,dir,True,True)
+                    else:
+                        laserMove(y,x,dir,True)
                     for i in range(2):
                         dir -= 1
                         if dir < 0:

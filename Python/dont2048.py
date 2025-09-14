@@ -1,3 +1,4 @@
+'''2048 but you have to lose before getting 128'''
 from tkinter import *
 from core import *
 import random
@@ -5,12 +6,9 @@ import random
 init(columns=4,rows=4,width=64,height=64)
 from core import panelWidth, panelHeight
 
-numbers = [] #Numbers is used to iterate over each number box that exists
-for y in panels:
-    for x in y:
-        row = x.grid_info()['row']
-        column = x.grid_info()['column']
-        objects[row][column] = [0,False] #Objects is used for values that need to be accessed based on panel coordinates
+root.title("Don't 2048")
+
+highestNumber = 0
 
 def numberSprite(y,x,number,ghost=False):
     if not ghost and not objects[y][x][1] == False:
@@ -18,6 +16,11 @@ def numberSprite(y,x,number,ghost=False):
         objects[y][x][1] = False #False is used as a default because after event ids are stored as integers so 0 might be an id
     panels[y][x].delete('main')
     displayNumber = 2**number #Number variable is linear and increases by one each time
+    global highestNumber
+    if displayNumber > highestNumber:
+        highestNumber = displayNumber #Store the highest number in a variable used to calculate the player's score
+        if highestNumber in [256,128,64,32]:
+            goalFail(number)
     blue = number*8+30
     colour = f"#{hex(9+blue)[2:]}{hex(29+blue)[2:]}{hex(51+blue)[2:]}"
     outlineColour = f"#{hex(29+blue)[2:]}{hex(49+blue)[2:]}{hex(71+blue)[2:]}"
@@ -27,8 +30,29 @@ def numberSprite(y,x,number,ghost=False):
         numbers.append([y,x,number])
         objects[y][x][0] = number
 
-numberSprite(0,1,1)
-numberSprite(2,3,2)
+
+extras = [] #A list of extra objects (the text and buttons for game over or victory)
+def reset():
+    '''Reset and initialise variables. Used at the start and when restarting.'''
+    global numbers
+    numbers = [] #Numbers is used to iterate over each number box that exists
+    for y in panels:
+        for x in y:
+            x.delete('main')
+            row = x.grid_info()['row']
+            column = x.grid_info()['column']
+            objects[row][column] = [0,False] #Objects is used for values that need to be accessed based on panel coordinates
+    for i in extras:
+        i.destroy()
+    numberSprite(0,1,1)
+    numberSprite(2,3,2)
+    root.bind('<w>', lambda event: move(0))
+    root.bind("<a>", lambda event: move(3))
+    root.bind("<s>", lambda event: move(2))
+    root.bind("<d>", lambda event: move(1))
+    #TODO: Caps-lock (and shift) breaks movement
+reset()
+
 
 def deleteGhost(y,x):
     if objects[y][x][0] == 0: #Don't delete if it actually does exist, this is a final failsafe if it runs at the exact wrong time
@@ -135,18 +159,67 @@ def move(dir):
                         stuck = False #The game is not stuck, continue
                         break
             if stuck:
-                fail()
-                
-def fail():
-    print("Game Over")
-    text = Label(root, text='Game Over!', font=('Arial', 24, 'bold'), fg='white', bg='black')
-    text.grid(row=4,column=0,columnspan=4,sticky='nsew')
-    restart = Button(root,text='Restart')
-    end = Button(root,text='Return')
-    restart.grid(row=5,column=0,columnspan=2,sticky='nsew')
-    end.grid(row=5,column=2,columnspan=2,sticky='nsew')
-    # for i in ['<w>','<a>','<s>','<d>']:
+                end(True)
+
+# goalFrame = Frame(root,width=panelWidth*4,height=30,bg='black')
+# goalFrame.grid(row=4,column=0,columnspan=4)
+
+goals = []
+for i in range(4):
+    goal = Canvas(root,width=42,height=42,bg='black',highlightthickness=0)
+    goal.grid(row=4,column=i,pady=(10,6))
+    info = [
+        ['32','red'],
+        ['64','orange'],
+        ['128','yellow'],
+        ['256','lime']
+    ]
+    goal.circle = goal.create_oval(2,2,40,40,outline=info[i][1],width=3)
+    goal.create_text(21,21,anchor=CENTER,text=info[i][0],fill='white',font=('Arial',12,'bold'),justify=CENTER)
+    goals.append(goal)
+
+points = [1000,500,100,5,0]
+def goalFail(number):
+    global currentGoal
+    currentGoal = number+1
+    goal = goals[number-5]
+    goal.create_line(0,0,42,42,fill='red',width=6)
+    goal.create_line(42,0,0,42,fill='red',width=6)
+    global score
+    score = points[number-4]
+
     
+    
+
+def end(fail):
+    print("Game Over")
+    if fail:
+        title = "Didn\'t 2048!"
+        subtitle = f'Score: {score}'
+    else:
+        title = "Game Over!"
+        subtitle = "You did 2048!"
+    goals[currentGoal-5].itemconfig(goals[currentGoal-5].circle, fill='green')
+    frame = Frame(root,width=panelWidth*4,height=30,bg='black') #Create a frame to make the game over text a fixed height.
+    #The width is the width of four panels
+    frame.grid_propagate(0)
+    frame.grid(row=5,column=0,columnspan=4,sticky='nsew')
+    extras.append(frame)
+    text = Label(frame, text=title, font=('Arial', 24, 'bold'), fg='white', bg='black')
+    text.place(x = frame.winfo_reqwidth() // 2, y = frame.winfo_reqheight() // 2, anchor = CENTER)
+    extras.append(text)
+    scoreText = Label(root, text=subtitle, font=("Arial", 14), fg='white', bg='black')
+    extras.append(scoreText)
+    scoreText.grid(row=6,column=0,columnspan=4,sticky='new',pady=(0,4))
+    restart = Button(root,text='Restart',command=reset)
+    extras.append(restart)
+    end = Button(root,text='Return',command=exit)
+    extras.append(end)
+    restart.grid(row=7,column=0,columnspan=2,sticky='nsew')
+    end.grid(row=7,column=2,columnspan=2,sticky='nsew')
+    for i in ['<w>','<a>','<s>','<d>']:
+        root.unbind(i)
+
     # for a in panels:
     #     for b in a:
     #         y = b.grid_info()['row']
@@ -157,14 +230,12 @@ def fail():
     #             b.delete('o')
     #         b.delete('n')
     # for i in numbers:
-    #     panels[i[0]][i[1]].create_text(10,20,text='N',fill='white',tags='n')
+    #     panels[i[0]][i[1]].create_text(10,20,text='N',fill='white',tags='n'
 
-buttons = []
-buttons.append(root.bind('<w>', lambda event: move(0)))
-buttons.append(root.bind("<a>", lambda event: move(3)))
-buttons.append(root.bind("<s>", lambda event: move(2)))
-buttons.append(root.bind("<d>", lambda event: move(1)))
+def exit():
+    root.destroy()
+    import menu
 
-        
+root.protocol("WM_DELETE_WINDOW", exit)
 
 root.mainloop()
