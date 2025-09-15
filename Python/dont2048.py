@@ -9,7 +9,6 @@ from core import panelWidth, panelHeight
 root.title("Don't 2048")
 
 highestNumber = 0
-
 def numberSprite(y,x,number,ghost=False):
     if not ghost and not objects[y][x][1] == False:
         panels[y][x].after_cancel(objects[y][x][1])
@@ -21,9 +20,9 @@ def numberSprite(y,x,number,ghost=False):
         highestNumber = displayNumber #Store the highest number in a variable used to calculate the player's score
         if highestNumber in [256,128,64,32]:
             goalFail(number)
-    blue = number*8+30
-    colour = f"#{hex(9+blue)[2:]}{hex(29+blue)[2:]}{hex(51+blue)[2:]}"
-    outlineColour = f"#{hex(29+blue)[2:]}{hex(49+blue)[2:]}{hex(71+blue)[2:]}"
+    blue = number*4+30
+    colour = f"#{hex(151-blue)[2:]}{hex(109-blue)[2:]}{hex(109-blue)[2:]}"
+    outlineColour = f"#{hex(171-blue)[2:]}{hex(120-blue)[2:]}{hex(129-blue)[2:]}"
     panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,width=6,outline=outlineColour,fill=colour,tags='main')
     panels[y][x].create_text(panelWidth/2,panelHeight/2,text=displayNumber,fill='white',font=("Arial",16,'bold'),tags='main')
     if not ghost: #Ghost is true if the number is displayed for the moving animation and shouldn't actually exist as an object.
@@ -31,27 +30,6 @@ def numberSprite(y,x,number,ghost=False):
         objects[y][x][0] = number
 
 
-extras = [] #A list of extra objects (the text and buttons for game over or victory)
-def reset():
-    '''Reset and initialise variables. Used at the start and when restarting.'''
-    global numbers
-    numbers = [] #Numbers is used to iterate over each number box that exists
-    for y in panels:
-        for x in y:
-            x.delete('main')
-            row = x.grid_info()['row']
-            column = x.grid_info()['column']
-            objects[row][column] = [0,False] #Objects is used for values that need to be accessed based on panel coordinates
-    for i in extras:
-        i.destroy()
-    numberSprite(0,1,1)
-    numberSprite(2,3,2)
-    root.bind('<w>', lambda event: move(0))
-    root.bind("<a>", lambda event: move(3))
-    root.bind("<s>", lambda event: move(2))
-    root.bind("<d>", lambda event: move(1))
-    #TODO: Caps-lock (and shift) breaks movement
-reset()
 
 
 def deleteGhost(y,x):
@@ -76,19 +54,25 @@ def fuseNumbers(y,x,number):
     # for i in numbers:
     #     panels[i[0]][i[1]].create_text(10,20,text='N',fill='white',tags='n')
 
-def move(dir):
-    if dir == 0: 
+def move(event):
+    if event.keysym in ['w','W','Up']:
+        dir = 0
         axis = 0
         reverse = False
-    elif dir == 1:
+    elif event.keysym in ['d','D','Right']:
+        dir = 1
         axis = 1
         reverse = True
-    elif dir == 2:
+    elif event.keysym in ['s','S','Down']:
+        dir = 2
         axis = 0
         reverse = True
-    elif dir == 3:
+    elif event.keysym in ['a','A','Left']:
+        dir = 3
         axis = 1
         reverse = False
+    else:
+        return #If the pressed key isn't a direction key
     oldNumbers = sorted(numbers, key=lambda i: i[axis], reverse=reverse)
     """Sort the numbers array into a new array in ascending or decending order of the x or y axis depending on the direction to move.
     This means that there will never be the issue of a number colliding with another before that number moves away, causing it to not move fully.
@@ -164,19 +148,7 @@ def move(dir):
 # goalFrame = Frame(root,width=panelWidth*4,height=30,bg='black')
 # goalFrame.grid(row=4,column=0,columnspan=4)
 
-goals = []
-for i in range(4):
-    goal = Canvas(root,width=42,height=42,bg='black',highlightthickness=0)
-    goal.grid(row=4,column=i,pady=(10,6))
-    info = [
-        ['32','red'],
-        ['64','orange'],
-        ['128','yellow'],
-        ['256','lime']
-    ]
-    goal.circle = goal.create_oval(2,2,40,40,outline=info[i][1],width=3)
-    goal.create_text(21,21,anchor=CENTER,text=info[i][0],fill='white',font=('Arial',12,'bold'),justify=CENTER)
-    goals.append(goal)
+
 
 points = [1000,500,100,5,0]
 def goalFail(number):
@@ -187,19 +159,62 @@ def goalFail(number):
     goal.create_line(42,0,0,42,fill='red',width=6)
     global score
     score = points[number-4]
+    if number == 8:
+        end(False)
 
     
+goals = []
+extras = [] #A list of extra objects (the text and buttons for game over or victory)
+def reset():
+    '''Reset and initialise variables. Used at the start and when restarting.'''
+    global numbers
+    numbers = [] #Numbers is used to iterate over each number box that exists
+    for y in panels:
+        for x in y:
+            x.delete('main')
+            row = x.grid_info()['row']
+            column = x.grid_info()['column']
+            objects[row][column] = [0,False] #Objects is used for values that need to be accessed based on panel coordinates
+    for i in extras:
+        i.destroy()
+    numberSprite(random.randint(0,3),random.randint(0,3),1)
+    numberSprite(random.randint(0,3),random.randint(0,3),2)
+    root.bind('<Key>',move)
     
+    global goals
+    for i in goals:
+        i.destroy()
+    goals = []
+    for i in range(4):
+        goal = Canvas(root,width=42,height=42,bg='black',highlightthickness=0)
+        goal.grid(row=4,column=i,pady=(10,6))
+        info = [
+            ['32','red'],
+            ['64','orange'],
+            ['128','yellow'],
+            ['256','lime']
+        ]
+        goal.circle = goal.create_oval(2,2,40,40,outline=info[i][1],width=3)
+        goal.create_text(21,21,anchor=CENTER,text=info[i][0],fill='white',font=('Arial',12,'bold'),justify=CENTER)
+        goals.append(goal)
+    global currentGoal
+    global score
+    global highestNumber
+    currentGoal = 5
+    score = 1000
+    highestNumber = 0
+reset()    
+
 
 def end(fail):
     print("Game Over")
     if fail:
         title = "Didn\'t 2048!"
         subtitle = f'Score: {score}'
+        goals[currentGoal-5].itemconfig(goals[currentGoal-5].circle, fill='green')
     else:
         title = "Game Over!"
         subtitle = "You did 2048!"
-    goals[currentGoal-5].itemconfig(goals[currentGoal-5].circle, fill='green')
     frame = Frame(root,width=panelWidth*4,height=30,bg='black') #Create a frame to make the game over text a fixed height.
     #The width is the width of four panels
     frame.grid_propagate(0)
@@ -217,8 +232,7 @@ def end(fail):
     extras.append(end)
     restart.grid(row=7,column=0,columnspan=2,sticky='nsew')
     end.grid(row=7,column=2,columnspan=2,sticky='nsew')
-    for i in ['<w>','<a>','<s>','<d>']:
-        root.unbind(i)
+    root.unbind('<Key>')
 
     # for a in panels:
     #     for b in a:

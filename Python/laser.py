@@ -412,6 +412,8 @@ def laserMove(y,x,dir,split = False, first = False):
 def objectMove(event, object):
     if frozen:
         return
+    if event.keysym not in ['w','W','a','A','s','S','d','D','Up','Left','Down','Right']: #If the pressed key is not a directional key
+        return
     global selectedObject
     if (len(selectedObject) == 0):
         selectedObject = object
@@ -427,19 +429,19 @@ def objectMove(event, object):
         panels[y][x].delete("main")
         objects[y][x] = ['','','']
 
-    if (event.keysym == "w"):
+    if (event.keysym in ['w','W','Up']):
         y -= 1
         if y < 0:
             y = 0
-    elif event.keysym == "a":
+    elif event.keysym in ['a','A','Left']:
         x -= 1
         if x < 0:
             x = 0
-    elif event.keysym == 's':
+    elif event.keysym in ['s','S','Down']:
         y += 1
         if y > 9:
             y = 9
-    elif event.keysym == 'd':
+    elif event.keysym in ['d','D','Right']:
         x += 1
         if x > 9:
             x = 9

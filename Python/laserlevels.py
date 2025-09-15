@@ -65,7 +65,7 @@ def level0():
     for i in boxes: 
         i.bind("<Button-1>", objectSelect)
 levels.append(level0)
-# level0()
+level0()
 
 def level1():
     '''Moving boxes intro.'''
@@ -282,7 +282,6 @@ def level5():
     for i in boxes:
         i.bind("<Button-1>", objectSelect)
 levels.append(level5)
-level5()
 
 # def level6():
 #     setPanel(0,0,'w')
