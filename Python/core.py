@@ -43,3 +43,23 @@ def leveltemplate(event = ''):
     root.after(1000,leveltemplate)
 
 root.bind("<space>",leveltemplate)
+
+def _create_circle(self, x, y, r, **kwargs):
+    if 'rY' in kwargs: #rY allows for the radius to be changed vertically seperately for an oval shape
+        rY = kwargs['rY']
+        kwargs.pop('rY')
+    else:
+        rY = r
+    return self.create_oval(x-r, y-rY, x+r, y+rY, **kwargs)
+Canvas.create_circle = _create_circle
+
+def _create_circle_arc(self, x, y, r, **kwargs):
+    if "start" in kwargs and "end" in kwargs:
+        kwargs["extent"] = kwargs.pop("end") - kwargs["start"]
+    if 'rY' in kwargs:
+        rY = kwargs['rY']
+        kwargs.pop('rY')
+    else:
+        rY = r
+    return self.create_arc(x-r, y-rY, x+r, y+rY, **kwargs)
+Canvas.create_circle_arc = _create_circle_arc

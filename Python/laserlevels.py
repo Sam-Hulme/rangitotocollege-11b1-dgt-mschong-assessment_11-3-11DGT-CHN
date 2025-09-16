@@ -7,33 +7,40 @@ import random
 
 
 
-def levelEnd(inactive = False): #Runs when the level is completed
+def levelEnd(inactive = False, colour = False): #colour is not used but is passed when the reciever is activated so must be declared
+    '''Runs when the level is completed.'''
     if inactive:
         return #If the emitter is not active, dont run
     freeze()
     root.after(2000,nextLevel)
 
-def doorOpen(reverse,y,x):
-    if not reverse:
-        if (objects[y][x][0] == 'd'):
+def doorOpen(reverse,colour):
+    from laser import doors #Ensure that the doors dictionary is updated
+    for i in doors[colour]:
+        y = i[0]
+        x = i[1]
+        if reverse and objects[y][x][0] in ['','l']: #Door overrides lasers
+            doorSprite(y,x,colour=colour)
+        elif not reverse and objects[y][x][0] == 'd':
             setPanel(y,x,'')
-        #     print("door opened") 
-        # else:
-        #     print("already open")
-    else:
-        if (objects[y][x][0] in ['','l']): #Door overrides lasers
-            setPanel(y,x,'d')
-        #     print("door closed")
-        # else:
-        #     print("already closed")
     panels[y][x].tag_raise('frame')
 
+def selectInit(selectedObject,boxes):
+    '''Automatically select a box and bind movement keys and mouse clicking to boxes'''
+    objectSelect(0, boxes[0])
 
-def doorRect(reverse,start,end): 
-    '''Open multiple doors'''
-    for y in range(start[0],end[0]+1):
-        for x in range(start[1],end[1]+1):
-            doorOpen(reverse,y,x)
+    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
+    for i in boxes:
+        i.bind("<Button-1>", objectSelect)
+
+
+    
+
+# def doorRect(reverse,start,end): 
+#     '''Open multiple doors'''
+#     for y in range(start[0],end[0]+1):
+#         for x in range(start[1],end[1]+1):
+#             doorOpen(reverse,y,x)
 
 def level0():
     '''Basic laser and box reflection intro.'''
@@ -49,23 +56,18 @@ def level0():
     emitterSprite(6,7,active=False,dir=0)
     recieverSprite(2,2,laser=False,dir=3,colour='red')
 
-    selectedObject = [2,7]
-    objectSelect(0, boxes[0])
-
-
 
     laserEvent(
         red = levelEnd
         #Put functions for different colours here
         #Use lambda for single expression functions
     )
-        
+    
+    selectInit((2,7),boxes)
 
-    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
-    for i in boxes: 
-        i.bind("<Button-1>", objectSelect)
+
 levels.append(level0)
-level0()
+# level0()
 
 def level1():
     '''Moving boxes intro.'''
@@ -84,20 +86,12 @@ def level1():
     emitterSprite(8,7,active=False,dir=0)
     recieverSprite(8,2,laser=False,dir=2,colour='red')
 
-
-    selectedObject = [5,3]
-    objectSelect(0, boxes[0])
-
-
     laserEvent(
         red = levelEnd
         #Put functions for different colours here
     )
+    selectInit((5,3),boxes)
 
-
-    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
-    for i in boxes:
-        i.bind("<Button-1>", objectSelect)
 levels.append(level1)
 
 def level2():
@@ -110,8 +104,8 @@ def level2():
     fillRect([9,1],[9,9],"w")
     fillRect([6,1],[8,8],'f')
 
-    doors = []
-    doors.append(setPanel(5,1,'d'))
+
+    setPanel(5,1,'d',colour='green')
 
     boxes = []
     boxes.append(boxSprite(3,4,flipped=False))
@@ -125,9 +119,9 @@ def level2():
     objectSelect(0, boxes[0])
 
 
-    laserEvent(doors,
-        green = lambda reverse: doorOpen(reverse,5,1),
-        red = levelEnd
+    laserEvent(
+        green = lambda reverse: doorOpen(reverse,'green'),
+        red = levelEnd #TODO: Make red reciever always the reciever for winning
         #Put functions for different colours here
     )
 
@@ -146,8 +140,8 @@ def level3():
     fillRect([1,6],[3,7],'f')
     fillRect([1,8],[8,8],'g')
 
-    doors = []
-    doors.append(fillRect([4,1],[4,4],'d'))
+
+    fillRect([4,1],[4,4],'d',colour='red')
 
     boxes = []
     boxes.append(boxSprite(4,7,flipped=False))
@@ -159,21 +153,13 @@ def level3():
     recieverSprite(8,2,laser=False,dir=2,colour='red')
     recieverSprite(1,9,laser=False,dir=0,colour="green")
 
-    def red(reverse):
-        for i in range(5):
-            doorOpen(reverse,4,i)
-
-    laserEvent(doors,
-       red = lambda reverse: red(reverse),
+    laserEvent(
+       red = doorOpen,
        green = levelEnd  
     )
 
-    selectedObject = [5,9]
-    objectSelect(0, boxes[0])
+    selectInit((5,9),boxes)
 
-    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
-    for i in boxes:
-        i.bind("<Button-1>", objectSelect)
 levels.append(level3)
 
 def level4():
@@ -187,34 +173,28 @@ def level4():
     fillRect([3,5],[5,5],'w')
     glassSprite(2,8)
 
-    doors = []
-    doors.append(setPanel(2,3,'d'))
-    doors.append(setPanel(1,8,'d'))
+
+    setPanel(2,3,'d',colour='red')
+    setPanel(1,8,'d',colour='green')
     
     boxes = []
     boxes.append(prismSprite(1,2,dir=0))
     boxes.append(boxSprite(1,1,flipped=False))
     boxes.append(boxSprite(7,3,flipped=True))
-    boxes.append(boxSprite(1,6,flipped=False))
+    boxes.append(boxSprite(1,6,flipped=False)) #TODO: make it more clear that boxes keep doors open
     emitterSprite(9,5,active=False,dir=0)
     recieverSprite(0,3,laser=False,dir=0,colour='green')
     recieverSprite(6,9,laser=False,dir=1,colour='red')
     recieverSprite(1,5,laser=False,dir=3,colour='blue')
 
-
-    laserEvent(doors,
-        red = lambda reverse: doorOpen(reverse,2,3),
-        green = lambda reverse: doorOpen(reverse,1,8),
+    doorOpeners = dict.fromkeys(('red','green'), doorOpen)
+    laserEvent(
+        **doorOpeners,
         blue = levelEnd
     )
 
 
-    selectedObject = [7,3]
-    objectSelect(0, boxes[2])
-
-    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
-    for i in boxes:
-        i.bind("<Button-1>", objectSelect)
+    selectInit((7,3),boxes)
 levels.append(level4)
 
 # def level5():
@@ -239,12 +219,12 @@ def level5():
 
     
 
-    doors = []
-    doors.append(fillRect([1,5],[2,5],'d'))
-    doors.append(fillRect([3,6],[3,8],'d'))
-    doors.append(fillRect([3,1],[3,4],'d'))
-    doors.append(setPanel(2,0,'d'))
-    doors.append(fillRect([4,5],[6,5],'d'))
+
+    fillRect([1,5],[2,5],'d',colour='green')
+    fillRect([3,6],[3,8],'d',colour='blue')
+    fillRect([3,1],[3,4],'d',colour='yellow')
+    setPanel(2,0,'d',colour='purple')
+    fillRect([4,5],[6,5],'d',colour='orange')
 
 
     boxes = []
@@ -261,31 +241,46 @@ def level5():
     recieverSprite(9,3,laser=False,dir=2,colour='orange')
     recieverSprite(7,9,laser=False,dir=1,colour='red')
 
-
-
-    laserEvent(doors,
-        green = lambda reverse: doorRect(reverse,[1,5],[2,5]),
-        blue = lambda reverse: doorRect(reverse,[3,6],[3,8]),
-        yellow = lambda reverse: doorRect(reverse,[3,1],[3,4]),
-        purple = lambda reverse: doorOpen(reverse,2,0),
-        orange = lambda reverse: doorRect(reverse,[4,5],[6,5]),
+    doorOpeners = dict.fromkeys(('green','blue','yellow','putple','orange'), doorOpen)
+    laserEvent(
+        **doorOpeners,
         red = levelEnd
     )
 
     #TODO: Split laser doesn't move through door opened on the same frame
     #TODO: Change door functions to allow colour to be set when door created, automatically setting up recievers.
 
-    selectedObject = [6,6]
-    objectSelect(0, boxes[0])
-
-    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
-    for i in boxes:
-        i.bind("<Button-1>", objectSelect)
+    selectInit((6,6),boxes)
 levels.append(level5)
 
-# def level6():
-#     setPanel(0,0,'w')
-# level6()
+
+def level6():
+    fillRect((4,5),(9,5),'w')
+    setPanel(5,5,'g')
+    fillRect((3,0),(3,9),'w')
+    setPanel(3,8,'g')
+    
+    emitterSprite(9,7,dir=0)
+    emitterSprite(5,9,dir=3,colour='green')
+    emitterSprite(9,2,dir=0,colour='blue')
+    emitterSprite(1,0,dir=1,colour='yellow')
+    emitterSprite(0,8,dir=2,colour='purple')
+    
+    
+
+    recieverSprite(4,7,dir=0,colour='green')
+    recieverSprite(5,0,dir=3,colour='blue')
+    recieverSprite(4,2,dir=0,colour='yellow')
+    recieverSprite(1,9,dir=1,colour='purple')
+    recieverSprite(9,8,dir=2,colour='red')
+
+    emitterActivators = dict.fromkeys(('green','blue','yellow','purple'), emitterActivate)
+    laserEvent(
+        **emitterActivators
+        # red = levelEnd
+    )
+    
+level6()
 
 
 root.mainloop() #Ensure all functions are defined before this is run.

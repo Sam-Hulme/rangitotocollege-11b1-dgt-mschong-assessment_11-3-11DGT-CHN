@@ -1,6 +1,6 @@
 import tkinter
 from tkinter import *
-from bindglobal import BindGlobal
+# from bindglobal import BindGlobal
 
 
 root = tkinter.Tk()
