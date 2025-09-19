@@ -8,7 +8,7 @@ currentGame = 1
 currentTitle = ''
 currentImage = ''
 titles = ['Laser','2048','Don\'t 2048']
-images = ["house.png",'house.png','house.png'] #the house image is the placeholder dw about it
+images = ["house.png",'mschong.png','house.png'] #the house image is the placeholder dw about it
 
 def changeGame(dir):
     global currentGame

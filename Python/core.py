@@ -63,3 +63,7 @@ def _create_circle_arc(self, x, y, r, **kwargs):
         rY = r
     return self.create_arc(x-r, y-rY, x+r, y+rY, **kwargs)
 Canvas.create_circle_arc = _create_circle_arc
+
+'''Next commit notes:
+
+'''

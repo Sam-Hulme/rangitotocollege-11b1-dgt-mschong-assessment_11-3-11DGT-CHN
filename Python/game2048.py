@@ -1,6 +1,7 @@
 from tkinter import *
 from core import *
 import random
+from PIL import Image, ImageTk
 
 init(columns=4,rows=4,width=64,height=64)
 from core import panelWidth, panelHeight
@@ -8,6 +9,7 @@ from core import panelWidth, panelHeight
 root.title("2048")
 
 highestNumber = 0
+mschong = ImageTk.PhotoImage(Image.open('mschong.png'))
 
 def numberSprite(y,x,number,ghost=False):
     if not ghost and not objects[y][x][1] == False:
@@ -22,11 +24,15 @@ def numberSprite(y,x,number,ghost=False):
     if displayNumber > highestNumber:
         highestNumber = displayNumber #Store the highest number in a variable used to calculate the player's score
         if highestNumber == 2048:
-            colour = "#57DB16"
-            outlineColour = "#A4FB78"
+            # colour = "#57DB16"
+            # outlineColour = "#A4FB78"
             end(False)
-    panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,width=6,outline=outlineColour,fill=colour,tags='main')
-    panels[y][x].create_text(panelWidth/2,panelHeight/2,text=displayNumber,fill='white',font=("Arial",16,'bold'),tags='main')
+    if number == 11:
+        panels[y][x].create_image(panelWidth/2,panelHeight/2,image=mschong,tags='main')
+        panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,width=6,fill='',outline='grey',tags='main')
+    else:
+        panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,width=6,outline=outlineColour,fill=colour,tags='main')
+        panels[y][x].create_text(panelWidth/2,panelHeight/2,text=displayNumber,fill='white',font=("Arial",16,'bold'),tags='main')
     if not ghost: #Ghost is true if the number is displayed for the moving animation and shouldn't actually exist as an object.
         numbers.append([y,x,number])
         objects[y][x][0] = number
@@ -113,6 +119,7 @@ def move(event):
                     y = yOld
                     break
             moved = True
+            
             # print(x,i[2])
             numberSprite(y,x,i[2],True) #Create a number at each location to make it look like the box actually moved
             objects[y][x][1] = panels[y][x].after(30, deleteGhost, y, x) #Wait a short time and then delete the fake number
@@ -204,8 +211,8 @@ def reset():
             objects[row][column] = [0,False] #Objects is used for values that need to be accessed based on panel coordinates
     for i in extras:
         i.destroy()
-    numberSprite(random.randint(0,3),random.randint(0,3),1)
     numberSprite(random.randint(0,3),random.randint(0,3),2)
+    numberSprite(random.randint(0,3),random.randint(0,3),1)
     root.bind('<Key>',move)
 
     global highestNumber

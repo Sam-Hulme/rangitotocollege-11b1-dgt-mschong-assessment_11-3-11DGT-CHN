@@ -25,12 +25,12 @@ def doorOpen(reverse,colour):
             setPanel(y,x,'')
     panels[y][x].tag_raise('frame')
 
-def selectInit(selectedObject,boxes):
+def selectInit(selectedObject,movables):
     '''Automatically select a box and bind movement keys and mouse clicking to boxes'''
-    objectSelect(0, boxes[0])
+    objectSelect(0, movables[0])
 
     root.bind("<Key>",lambda event: objectMove(event, selectedObject))
-    for i in boxes:
+    for i in movables:
         i.bind("<Button-1>", objectSelect)
 
 
@@ -43,15 +43,15 @@ def selectInit(selectedObject,boxes):
 #             doorOpen(reverse,y,x)
 
 def level0():
-    '''Basic laser and box reflection intro.'''
+    '''Basic laser and mirror reflection intro.'''
     
     fillRect([3,2],[6,6],"f")
     fillRect([2,8],[6,8],'w')
     fillRect([1,2],[1,8],'w')
     # setPanel(2,5,'w')
 
-    boxes = []
-    boxes.append(boxSprite(2,7,flipped=False))
+    movables = []
+    movables.append(mirrorSprite(2,7,flipped=False))
 
     emitterSprite(6,7,active=False,dir=0)
     recieverSprite(2,2,laser=False,dir=3,colour='red')
@@ -63,23 +63,23 @@ def level0():
         #Use lambda for single expression functions
     )
     
-    selectInit((2,7),boxes)
+    selectInit((2,7),movables)
 
 
 levels.append(level0)
 # level0()
 
 def level1():
-    '''Moving boxes intro.'''
+    '''Moving mirrors intro.'''
 
     fillRect([5,3],[8,6],"f")
     fillRect([3,1],[8,1],"w")
     fillRect([3,8],[8,8],"w")
     fillRect([3,2],[3,7],"w")
 
-    boxes = []
-    boxes.append(boxSprite(4,7,flipped=False))
-    boxes.append(boxSprite(5,3,flipped=True))
+    movables = []
+    movables.append(mirrorSprite(4,7,flipped=False))
+    movables.append(mirrorSprite(5,3,flipped=True))
     # boxes.append(boxSprite(6,5,False))
     # boxes.append(boxSprite(6,6,True))
 
@@ -90,7 +90,7 @@ def level1():
         red = levelEnd
         #Put functions for different colours here
     )
-    selectInit((5,3),boxes)
+    selectInit((5,3),movables)
 
 levels.append(level1)
 
@@ -107,28 +107,22 @@ def level2():
 
     setPanel(5,1,'d',colour='green')
 
-    boxes = []
-    boxes.append(boxSprite(3,4,flipped=False))
-    boxes.append(boxSprite(8,1,flipped=True))
+    movables = []
+    movables.append(mirrorSprite(3,4,flipped=False))
+    movables.append(mirrorSprite(8,1,flipped=True))
 
     emitterSprite(4,8,active=False,dir=3)
     recieverSprite(1,8,laser=False,dir=1,colour='red')
     recieverSprite(0,3,laser=False,dir=0,colour='green')
 
-    selectedObject = [3,4]
-    objectSelect(0, boxes[0])
-
-
     laserEvent(
-        green = lambda reverse: doorOpen(reverse,'green'),
+        green = doorOpen,
         red = levelEnd #TODO: Make red reciever always the reciever for winning
         #Put functions for different colours here
     )
 
 
-    root.bind("<Key>",lambda event: objectMove(event, selectedObject))
-    for i in boxes:
-        i.bind("<Button-1>", objectSelect)
+    selectInit((3,4),movables)
 levels.append(level2)
 
 
@@ -143,11 +137,11 @@ def level3():
 
     fillRect([4,1],[4,4],'d',colour='red')
 
-    boxes = []
-    boxes.append(boxSprite(4,7,flipped=False))
-    boxes.append(boxSprite(5,1,flipped=True))
-    boxes.append(boxSprite(3,2,flipped=False))
-    boxes.append(boxSprite(7,9,flipped=True))
+    movables = []
+    movables.append(mirrorSprite(4,7,flipped=False))
+    movables.append(mirrorSprite(5,1,flipped=True))
+    movables.append(mirrorSprite(3,2,flipped=False))
+    movables.append(mirrorSprite(7,9,flipped=True))
 
     emitterSprite(8,7,dir=0)
     recieverSprite(8,2,laser=False,dir=2,colour='red')
@@ -158,7 +152,7 @@ def level3():
        green = levelEnd  
     )
 
-    selectInit((5,9),boxes)
+    selectInit((5,9),movables)
 
 levels.append(level3)
 
@@ -177,11 +171,11 @@ def level4():
     setPanel(2,3,'d',colour='red')
     setPanel(1,8,'d',colour='green')
     
-    boxes = []
-    boxes.append(prismSprite(1,2,dir=0))
-    boxes.append(boxSprite(1,1,flipped=False))
-    boxes.append(boxSprite(7,3,flipped=True))
-    boxes.append(boxSprite(1,6,flipped=False)) #TODO: make it more clear that boxes keep doors open
+    movables = []
+    movables.append(prismSprite(1,2,dir=0))
+    movables.append(mirrorSprite(1,1,flipped=False))
+    movables.append(mirrorSprite(7,3,flipped=True))
+    movables.append(mirrorSprite(1,6,flipped=False)) #TODO: make it more clear that boxes keep doors open
     emitterSprite(9,5,active=False,dir=0)
     recieverSprite(0,3,laser=False,dir=0,colour='green')
     recieverSprite(6,9,laser=False,dir=1,colour='red')
@@ -194,7 +188,7 @@ def level4():
     )
 
 
-    selectInit((7,3),boxes)
+    selectInit((7,3),movables)
 levels.append(level4)
 
 # def level5():
@@ -227,12 +221,12 @@ def level5():
     fillRect([4,5],[6,5],'d',colour='orange')
 
 
-    boxes = []
-    boxes.append(prismSprite(6,6,dir=3))
-    boxes.append(boxSprite(1,7,flipped=True))
-    boxes.append(prismSprite(1,4,dir=0))
-    boxes.append(boxSprite(7,4,flipped=False))
-    boxes.append(prismSprite(1,0,dir=3))
+    movables = []
+    movables.append(prismSprite(6,6,dir=3))
+    movables.append(mirrorSprite(1,7,flipped=True))
+    movables.append(prismSprite(1,4,dir=0))
+    movables.append(mirrorSprite(7,4,flipped=False))
+    movables.append(prismSprite(1,0,dir=3))
     emitterSprite(5,9,active=False,dir=3)
     recieverSprite(1,8,laser=False,dir=1,colour='green')
     recieverSprite(9,7,laser=False,dir=2,colour='blue')
@@ -241,7 +235,7 @@ def level5():
     recieverSprite(9,3,laser=False,dir=2,colour='orange')
     recieverSprite(7,9,laser=False,dir=1,colour='red')
 
-    doorOpeners = dict.fromkeys(('green','blue','yellow','putple','orange'), doorOpen)
+    doorOpeners = dict.fromkeys(('green','blue','yellow','purple','orange'), doorOpen)
     laserEvent(
         **doorOpeners,
         red = levelEnd
@@ -250,11 +244,12 @@ def level5():
     #TODO: Split laser doesn't move through door opened on the same frame
     #TODO: Change door functions to allow colour to be set when door created, automatically setting up recievers.
 
-    selectInit((6,6),boxes)
+    selectInit((6,6),movables)
 levels.append(level5)
 
 
 def level6():
+    '''Colour-activated emitter intro'''
     fillRect((4,5),(9,5),'w')
     setPanel(5,5,'g')
     fillRect((3,0),(3,9),'w')
@@ -279,8 +274,40 @@ def level6():
         **emitterActivators
         # red = levelEnd
     )
+
+
+def level7():
+    fillRect((0,0),(0,8),'w')
+    fillRect((4,0),(4,9),'w')
+    setPanel(4,5,'g')
+    fillRect((6,1),(8,3),'w')
+    setPanel(6,2,'g')
+    setPanel(7,3,'g')
+    setPanel(7,2,'')
+    setPanel(4,2,'g')
+    # boxSpawnerSprite(5,8)
+    # boxSpawnerSprite(6,8,open=True)
+
+    movables = []
+    movables.append(boxSpawnerSprite(0,9,open=1))
+    movables.append(boxSpawnerSprite(5,0))
+    movables.append(mirrorSprite(7,2,flipped=False))
+    movables.append(mirrorSprite(8,7,flipped=False))
+
+
+
+    # boxSprite(3,0,stage=0)
+    # boxSprite(2,1,stage=1)
+    # boxSprite(3,2,stage=2)
+    # boxSprite(2,3,stage=3)
+    # boxSprite(3,4,stage=4)
+    emitterSprite(9,5,dir=0)
+    recieverSprite(0,2,colour='blue',dir=0)
+    setPanel(1,2,'d',colour='green')
+
+    selectInit((0,9),movables)
     
-level6()
+level7()
 
 
 root.mainloop() #Ensure all functions are defined before this is run.
