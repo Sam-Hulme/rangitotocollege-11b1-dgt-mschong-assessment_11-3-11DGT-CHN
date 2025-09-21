@@ -25,6 +25,16 @@ def doorOpen(reverse,colour):
             setPanel(y,x,'')
     panels[y][x].tag_raise('frame')
 
+def boxSpawnerActivate(reverse,colour):
+    from laser import boxSpawners
+    y = boxSpawners[colour][0]
+    x = boxSpawners[colour][1]
+    if objects[y][x][0] == 's' and objects[y][x][1] == 0:
+        if not reverse and not objects[y][x][2]:
+            boxSpawnerSprite(y,x,active=True,colour=colour)
+        elif reverse and objects[y][x][2]:
+            boxSpawnerSprite(y,x,active=False,colour=colour)
+
 def selectInit(selectedObject,movables):
     '''Automatically select a box and bind movement keys and mouse clicking to boxes'''
     objectSelect(0, movables[0])
@@ -285,12 +295,13 @@ def level7():
     setPanel(7,3,'g')
     setPanel(7,2,'')
     setPanel(4,2,'g')
+    setPanel(1,5,'f')
     # boxSpawnerSprite(5,8)
     # boxSpawnerSprite(6,8,open=True)
 
     movables = []
     movables.append(boxSpawnerSprite(0,9,open=1))
-    movables.append(boxSpawnerSprite(5,0))
+    movables.append(boxSpawnerSprite(5,0,colour='blue'))
     movables.append(mirrorSprite(7,2,flipped=False))
     movables.append(mirrorSprite(8,7,flipped=False))
 
@@ -302,10 +313,13 @@ def level7():
     # boxSprite(2,3,stage=3)
     # boxSprite(3,4,stage=4)
     emitterSprite(9,5,dir=0)
-    recieverSprite(0,2,colour='blue',dir=0)
+    recieverSprite(0,5,colour='blue',dir=0)
     setPanel(1,2,'d',colour='green')
 
     selectInit((0,9),movables)
+    laserEvent(
+        blue = boxSpawnerActivate
+    )
     
 level7()
 
