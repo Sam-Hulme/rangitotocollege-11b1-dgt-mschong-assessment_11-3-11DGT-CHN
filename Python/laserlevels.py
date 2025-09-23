@@ -29,10 +29,15 @@ def boxSpawnerActivate(reverse,colour):
     from laser import boxSpawners
     y = boxSpawners[colour][0]
     x = boxSpawners[colour][1]
-    if objects[y][x][0] == 's' and objects[y][x][1] == 0:
+    if objects[y][x][0] == 's':
+        # print(f"{colour} spawner activated (reverse: {reverse}) at {y,x}. Current active state: {objects[y][x][2]}")
         if not reverse and not objects[y][x][2]:
             boxSpawnerSprite(y,x,active=True,colour=colour)
         elif reverse and objects[y][x][2]:
+            print(boxSpawners[colour])
+            if boxSpawners[colour][3] != '':
+                panels[y][x].after_cancel(boxSpawners[colour][3])
+                panels[y][x].unbind('<Button-1>')
             boxSpawnerSprite(y,x,active=False,colour=colour)
 
 def selectInit(selectedObject,movables):
@@ -300,7 +305,7 @@ def level7():
     # boxSpawnerSprite(6,8,open=True)
 
     movables = []
-    movables.append(boxSpawnerSprite(0,9,open=1))
+    movables.append(boxSpawnerSprite(0,9))
     movables.append(boxSpawnerSprite(5,0,colour='blue'))
     movables.append(mirrorSprite(7,2,flipped=False))
     movables.append(mirrorSprite(8,7,flipped=False))

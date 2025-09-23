@@ -11,7 +11,7 @@ root = tk.Tk()
 houser = 1
 housec = 0
 
-image = PhotoImage(file=os.path.relpath('house.png', os.path.dirname(__file__)))
+image = PhotoImage(file=os.path.relpath('mschong.png', os.path.dirname(__file__)))
 root.iconphoto(True,image)
 def addhouse():
     global houser
@@ -33,7 +33,9 @@ def popuploop():
     popup.geometry(f"{160}x{90}+{random.randint(0,width)}+{random.randint(0,height)}") 
     popuphouse = Label(popup, image=image)
     popuphouse.pack()
+    popup.focus_force()
     popup.protocol("WM_DELETE_WINDOW", popuploop)
+    popup.attributes('-topmost', True)
     popup.bind("<KeyPress>", stop)
     root.after(100, popuploop)
 
