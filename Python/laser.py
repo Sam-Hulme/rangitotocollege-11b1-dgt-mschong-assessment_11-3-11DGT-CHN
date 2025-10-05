@@ -42,7 +42,7 @@ movableBlocks = ['m','w','e','r','d','p','g','b'] #Objects that block box moveme
     n = box button
 """
 #TODO: change this list to a list of things that don't block boxes, which there are much less of.
-laserBlocks = ['f','w','d','s','b'] 
+laserBlocks = ['f','w','d','s','n'] 
 '''Things that should block lasers and don't do anything else with lasers'''
 movableObjects = ['m','p','b']
 
@@ -117,6 +117,8 @@ def setPanel(y, x, type, **data): #set a single panel to a solid colour object
         objects[y][x][0] = type
     elif not type == '':
         objectSprites[type](y,x,**data)
+    else:
+        objects[y][x] = ['','','']
     
     return panels[y][x]
     
@@ -182,6 +184,8 @@ def fillRect(startCoords,endCoords,type,**data): #Fill a rectangle of panels
                 panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill=objectColours[type], tags="main")
             elif not type == '':
                 objectSprites[type](y,x,**data)
+            else:
+                objects[y][x] = ['','','']
             objects[y][x][0] = type
             objectsCreated.append(panels[y][x])
     return objectsCreated
@@ -394,7 +398,7 @@ def emitterSprite(y,x,**data):
                 return
             else:
                 root.after(150, lambda: emitterSprite(y,x,dir=dir,colour=colour,fade=fade-1))
-
+        print(fade)
         # else:
         #     emitterSprite(y,x,active=active,dir=dir,colour=colour) #Start over using regular colour values
         #     return
@@ -919,7 +923,7 @@ def objectMove(event, object):
         return
     type = objects[y][x][0]
     dir = objects[y][x][1]
-    oldType = objects[y][x][2][0]
+    oldType = objects[y][x][2][0] #The object under the current object
     oldData1 = objects[y][x][2][1] #The data of the object under the movable object
     oldData2 = objects[y][x][2][2]
     # spawner = ''
@@ -931,11 +935,6 @@ def objectMove(event, object):
     #     spawner = ''
     # print(f"No box spawner data. Object data: {objects[y][x]}")
     # print(spawner)
-    if oldType == 'n' and type == 'b':
-        try:
-            laserEvents[oldData1](reverse=True,colour=oldData1) #Deactivate the colour if a box is being removed from a button
-        except KeyError:
-            print(f"WARNING: '{objects[y][x][1]}' colour has no function set.")
     panels[y][x].unbind("<Button-1>") #Unbind move select
     panels[y][x].delete("selected") #Delete selection indicator
     if oldType not in ['','l']: 
@@ -961,7 +960,7 @@ def objectMove(event, object):
             x = 9
     
     #TODO: Finish level 7
-    #TODO: Moving a box from a button into a door closed by that button being active will deactivate the button and open the door before the box hits it, making it useless
+    #DONE: Moving a box from a button into a door closed by that button being active will deactivate the button and open the door before the box hits it, making it useless
     #TODO: Coloured laser emitter does not play the startup animation in reverse when deactivating, it plays the normal animation.
     #TODO: Deactivating a colour while an emitter on that colour is activating will cause it to still activate the laser until laser is updated again (this is easiest to see with a box and a button)
     #TODO: Coloured emitter startup animation possibly isn't fully playing(?)
@@ -969,6 +968,12 @@ def objectMove(event, object):
     if objects[y][x][0] in movableBlocks: 
         y = selectedObject[0]
         x = selectedObject[1] #Revert movement, making functions below replace existing box that was removed above. (another solution might print instead)
+    else:
+        if oldType == 'n' and type == 'b': #If there is a button under and this is a box and this box can be moved
+            try:
+                laserEvents[oldData1](reverse=True,colour=oldData1) #Deactivate the colour if a box is being removed from a button
+            except KeyError:
+                print(f"WARNING: '{objects[y][x][1]}' colour has no function set.")
     # print(spawner)
     if objects[y][x][0] == 'n' and type == 'b':
         colours[objects[y][x][1]] = True

@@ -292,13 +292,16 @@ def level6():
 
 
 def level7():
+    fillRect((5,0),(9,3),'f') #Fill all panels in the bottom half with floors and leave empty gaps only where lasers go to make the level less confusing and intimidating.
+    setPanel(5,2,'')
     fillRect((0,0),(0,8),'w')
     fillRect((4,0),(4,9),'w')
     fillRect((5,5),(6,5),'f')
     fillRect((7,5),(9,7),'f')
-    fillRect((5,3),(9,3),'w')
+    fillRect((6,3),(8,3),'w')
     setPanel(8,4,'g')
-    fillRect((4,4),(6,4),'g')
+    setPanel(4,4,'g')
+    setPanel(6,4,'g')
     fillRect((6,1),(8,3),'w')
     setPanel(6,2,'g')
     setPanel(7,3,'g')
@@ -308,6 +311,8 @@ def level7():
     setPanel(4,8,'g')
     fillRect((5,5),(6,7),'w')
     setPanel(5,7,'g')  
+    fillRect((5,9),(9,9),'f')
+    
     # boxSpawnerSprite(5,8)
     # boxSpawnerSprite(6,8,open=True)
 
@@ -328,12 +333,11 @@ def level7():
     emitterSprite(9,4,dir=0)
     recieverSprite(0,2,colour='blue',dir=0)
     recieverSprite(0,4,colour='green',dir=0)
-    boxButtonSprite(1,0,colour='yellow')
+    boxButtonSprite(0,0,colour='yellow')
     emitterSprite(9,8,dir=0,colour='yellow')
     setPanel(1,2,'d',colour='yellow')
     setPanel(1,4,'d',colour='purple',reverse=True,open=True)
-    setPanel(1,1,'d',colour='yellow',reverse=True,open=True)
-    setPanel(2,0,'d',colour='yellow',reverse=True,open=True)
+    setPanel(1,0,'d',colour='yellow',reverse=True,open=True)
 
     selectInit((0,9),movables)
     def yellow(reverse,colour):

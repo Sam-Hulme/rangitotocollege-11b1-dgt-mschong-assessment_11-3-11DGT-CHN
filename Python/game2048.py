@@ -211,8 +211,8 @@ def reset():
             objects[row][column] = [0,False] #Objects is used for values that need to be accessed based on panel coordinates
     for i in extras:
         i.destroy()
-    numberSprite(random.randint(0,3),random.randint(0,3),2)
-    numberSprite(random.randint(0,3),random.randint(0,3),1)
+    numberSprite(random.randint(0,3),random.randint(0,3),10)
+    numberSprite(random.randint(0,3),random.randint(0,3),10)
     root.bind('<Key>',move)
 
     global highestNumber
@@ -222,7 +222,7 @@ reset()
 
 def exit():
     root.destroy()
-    import menu
+    
 
 def cont():
     '''Destroy all the text and buttons and continue the game.'''

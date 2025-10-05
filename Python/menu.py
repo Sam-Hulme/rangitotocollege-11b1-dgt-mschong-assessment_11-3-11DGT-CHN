@@ -1,4 +1,5 @@
 from tkinter import *
+import subprocess
 from PIL import Image, ImageTk
 
 root = Tk()
@@ -30,13 +31,21 @@ def changeGame(dir):
 
 
 def start():
-    root.destroy()
+    global runningText
+    runningText = Canvas(root,width=300,height=120,bg='black',highlightthickness=5)
+    runningText.create_text(150,50,text='Game Running',font=("Arial",15,'bold'),fill='white')
+    runningText.create_text(150,70,text='Close game to continue',font=('Arial',10),fill='white')
+    runningText.place(x=root.winfo_width()/2,y=root.winfo_height()/2,anchor='center')
+    root.after(2,runGame)
+
+def runGame():
     if currentGame == 1:
-        import laserlevels
+        subprocess.run(["python","laserlevels.py"])
     elif currentGame == 2:
-        import game2048 #2048 had to be named 'game2048' because just a number doesnt work
+        subprocess.run(["python","game2048.py"]) #2048 had to be named 'game2048' because just a number doesnt work
     elif currentGame == 3:
-        import dont2048
+        subprocess.run(["python","dont2048.py"])
+    runningText.destroy()
 
 title = Label(root,text=currentTitle,fg='white',bg='black',font=('Arial',20,'bold'))
 title.grid(row=0,column=1,sticky='nsew',padx=20,pady=10)

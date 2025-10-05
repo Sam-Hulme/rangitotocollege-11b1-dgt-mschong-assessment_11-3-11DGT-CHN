@@ -248,7 +248,6 @@ def end(fail):
 
 def exit():
     root.destroy()
-    import menu
 
 root.protocol("WM_DELETE_WINDOW", exit)
 
