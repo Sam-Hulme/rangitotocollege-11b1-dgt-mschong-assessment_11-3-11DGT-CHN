@@ -19,10 +19,11 @@ def doorOpen(reverse,colour):
     for i in doors[colour]:
         y = i[0]
         x = i[1]
-        if reverse and objects[y][x][0] in ['','l']: #Door overrides lasers
-            doorSprite(y,x,colour=colour)
-        elif not reverse and objects[y][x][0] == 'd':
-            setPanel(y,x,'')
+        doorReverse = i[2]
+        if reverse and objects[y][x][0] in ['','l','d']: #Door overrides lasers
+            doorSprite(y,x,colour=colour,reverse=doorReverse,open=doorReverse)
+        elif not reverse and objects[y][x][0] in ['','l','d']:
+            doorSprite(y,x,colour=colour,reverse=doorReverse,open=not doorReverse)
     panels[y][x].tag_raise('frame')
 
 def boxSpawnerActivate(reverse,colour):
@@ -34,7 +35,6 @@ def boxSpawnerActivate(reverse,colour):
         if not reverse and not objects[y][x][2]:
             boxSpawnerSprite(y,x,active=True,colour=colour)
         elif reverse and objects[y][x][2]:
-            print(boxSpawners[colour])
             if boxSpawners[colour][3] != '':
                 panels[y][x].after_cancel(boxSpawners[colour][3])
                 panels[y][x].unbind('<Button-1>')
@@ -294,21 +294,29 @@ def level6():
 def level7():
     fillRect((0,0),(0,8),'w')
     fillRect((4,0),(4,9),'w')
-    setPanel(4,5,'g')
+    fillRect((5,5),(6,5),'f')
+    fillRect((7,5),(9,7),'f')
+    fillRect((5,3),(9,3),'w')
+    setPanel(8,4,'g')
+    fillRect((4,4),(6,4),'g')
     fillRect((6,1),(8,3),'w')
     setPanel(6,2,'g')
     setPanel(7,3,'g')
     setPanel(7,2,'')
     setPanel(4,2,'g')
-    setPanel(1,5,'f')
+    setPanel(4,6,'g')
+    setPanel(4,8,'g')
+    fillRect((5,5),(6,7),'w')
+    setPanel(5,7,'g')  
     # boxSpawnerSprite(5,8)
     # boxSpawnerSprite(6,8,open=True)
 
     movables = []
-    movables.append(boxSpawnerSprite(0,9))
-    movables.append(boxSpawnerSprite(5,0,colour='blue'))
+    movables.append(boxSpawnerSprite(0,9,colour='green'))
+    movables.append(boxSpawnerSprite(3,0,colour='blue'))
     movables.append(mirrorSprite(7,2,flipped=False))
-    movables.append(mirrorSprite(8,7,flipped=False))
+    movables.append(mirrorSprite(8,5,flipped=False))
+    movables.append(mirrorSprite(5,6,flipped=False))
 
 
 
@@ -317,13 +325,25 @@ def level7():
     # boxSprite(3,2,stage=2)
     # boxSprite(2,3,stage=3)
     # boxSprite(3,4,stage=4)
-    emitterSprite(9,5,dir=0)
-    recieverSprite(0,5,colour='blue',dir=0)
-    setPanel(1,2,'d',colour='green')
+    emitterSprite(9,4,dir=0)
+    recieverSprite(0,2,colour='blue',dir=0)
+    recieverSprite(0,4,colour='green',dir=0)
+    boxButtonSprite(1,0,colour='yellow')
+    emitterSprite(9,8,dir=0,colour='yellow')
+    setPanel(1,2,'d',colour='yellow')
+    setPanel(1,4,'d',colour='purple',reverse=True,open=True)
+    setPanel(1,1,'d',colour='yellow',reverse=True,open=True)
+    setPanel(2,0,'d',colour='yellow',reverse=True,open=True)
 
     selectInit((0,9),movables)
+    def yellow(reverse,colour):
+        doorOpen(reverse,colour)
+        emitterActivate(reverse,colour)
+
     laserEvent(
-        blue = boxSpawnerActivate
+        blue = boxSpawnerActivate,
+        green = boxSpawnerActivate,
+        yellow = yellow
     )
     
 level7()
