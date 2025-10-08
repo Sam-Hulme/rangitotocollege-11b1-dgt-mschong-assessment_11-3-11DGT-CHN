@@ -349,6 +349,19 @@ def level7():
         green = boxSpawnerActivate,
         yellow = yellow
     )
+
+def level8():
+    
+    movables = []
+    movables.append(boxSpawnerSprite(5,7))
+
+    emitterSprite(0,0,dir=0)
+    emitterSprite(8,9,dir=0,colour='red')
+    boxButtonSprite(5,4,colour='red')
+
+    selectInit((5,7),movables)
+
+    laserEvent(red = emitterActivate)
     
 level7()
 

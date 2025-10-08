@@ -22,7 +22,7 @@ def number_punctuation(number, extra = ''):
 # print(number_punctuation(total_mem,' MB'))
 # print(round(memory.used/1000000), 'MB')
 # print(memory.percent)
-time.sleep(0)
+time.sleep(300)
 
 root = tk.Tk()
 root.attributes('-topmost', True)

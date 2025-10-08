@@ -130,7 +130,7 @@ def setPanel(y, x, type, **data): #set a single panel to a solid colour object
 #     solidColour(panels[3][i],"#367FEC")
 
 """
-IDEAS:
+IDEAS: (won't have time for all of them)
 
 # Box that is destroyed by the laser: DONE
 #     Object that respawns the box if it is destroyed
@@ -374,15 +374,26 @@ def emitterSprite(y,x,**data):
             centerColour = "#AFAFAF"
             outerColour = "#AFAFAF"
     else:
+        print(fade)
         if fade > 0: #Fade out
+            if colours[colour]: #If the colour is reactivated during the animation
+                emitterSprite(y,x,dir=dir,colour=colour,fade=fade-10) #Reverse the animation
+                return
             centerRed = hex(207+(fade+1)*-3)[2:] #fade increases by one each animation frame
             centerGreen = hex(2+(fade+1)*20)[2:] #Convert it to base 16 and remove the first two characters (which are '0x')
             centerBlue = hex(2+(fade+1)*20)[2:]
             outerRed = hex(255+(fade+1)*-8)[2:]
             outerGreen = hex(107+(fade+1)*7)[2:]
             outerBlue = hex(107+(fade+1)*7)[2:]
-            root.after(150, lambda: emitterSprite(y,x,dir=dir,colour=colour,fade=fade-1)) #Update again after 100 ms with fade one lower
+            if not fade+1 == 10:
+                root.after(150, lambda: emitterSprite(y,x,dir=dir,colour=colour,fade=fade+1)) #Update again after 100 ms with fade one lower
+            else:
+                fade = 0
+
         elif fade < 0: #Fade in
+            if not colours[colour]: #If the colour is deactivated during the animation
+                emitterSprite(y,x,dir=dir,colour=colour,fade=fade+10) #Reverse the animation
+                return
             # fade = abs(fade)
             centerRed = hex(177+(fade+1)*-3)[2:]
             centerGreen = hex(182+(fade+1)*18)[2:]
@@ -395,10 +406,12 @@ def emitterSprite(y,x,**data):
             if fade-1 == -10:
                 emitterSprite(y,x,dir=dir,colour=colour,active=True) #Manually activate the emitter sprite because laserMove() with split set to true doesn't do it automatically
                 laserMove(y,x,dir,True) #Activate the emitter with split true 
+                if laserEmitters[False][3]: 
+                    laserMove(laserEmitters[False][0],laserEmitters[False][1],laserEmitters[False][2]) #Run the laserMove event as the main reciever to update everything
                 return
             else:
                 root.after(150, lambda: emitterSprite(y,x,dir=dir,colour=colour,fade=fade-1))
-        print(fade)
+        # print(fade)
         # else:
         #     emitterSprite(y,x,active=active,dir=dir,colour=colour) #Start over using regular colour values
         #     return
@@ -458,7 +471,7 @@ def emitterSprite(y,x,**data):
     if colour == False:
         panels[y][x].bind("<Button-1>", lambda event: laserMove(y,x,dir))
     else:
-        laserEmitters[colour] = [y,x,dir,active] #Store data in a variable that can be accessed to activate the reciever
+        laserEmitters[colour] = [y,x,dir,active,fade] #Store data in a variable that can be accessed to activate the reciever
 
 def recieverSprite(y,x,**data): 
     '''
@@ -522,6 +535,7 @@ def doorSprite(y,x,**data):
     doors.setdefault(colour,[]) #If this colour is not already in the doors dictionary, create a list inside it
     if (y,x,reverse) not in doors[colour]:
         doors[colour].append((y,x,reverse))
+    panels[y][x].tag_raise("frame")
     # print(doors)
 
 def boxSprite(y,x,**data):
@@ -861,7 +875,7 @@ def laserMove(y,x,dir,split = False, first = False):
                         dir = 0
                     oldDir = dir
                     if not split:
-                        laserMove(y,x,dir,True,True)
+                        laserMove(y,x,dir,True,True)    
                     else:
                         laserMove(y,x,dir,True)
                     for i in range(2):
@@ -937,11 +951,13 @@ def objectMove(event, object):
     # print(spawner)
     panels[y][x].unbind("<Button-1>") #Unbind move select
     panels[y][x].delete("selected") #Delete selection indicator
+    print(objects[y][x])
     if oldType not in ['','l']: 
         setPanel(y,x,oldType,colour=oldData1,dir=oldData1,flipped=oldData1) #add any extra data kwargs here for objects that can be moved over
     else:
         panels[y][x].delete("main")
         objects[y][x] = ['','','']
+    
     if (event.keysym in ['w','W','Up']):
         y -= 1
         if y < 0:
@@ -962,20 +978,25 @@ def objectMove(event, object):
     #TODO: Finish level 7
     #DONE: Moving a box from a button into a door closed by that button being active will deactivate the button and open the door before the box hits it, making it useless
     #TODO: Coloured laser emitter does not play the startup animation in reverse when deactivating, it plays the normal animation.
-    #TODO: Deactivating a colour while an emitter on that colour is activating will cause it to still activate the laser until laser is updated again (this is easiest to see with a box and a button)
+    #DONE: Deactivating a colour while an emitter on that colour is activating will cause it to still activate the laser until laser is updated again (this is easiest to see with a box and a button)
     #TODO: Coloured emitter startup animation possibly isn't fully playing(?)
+    #TODO: If no default emitter is created, one will be made at 0,0 when a coloured emitter is activated. If one does exist, it will be activated automatically when a coloured emitter is activated.
+    #If the defualt emitter is not active, objectMove will not run laserMove and the laser will not be updated. 
+    #If a colour is deactivated, the coloured emitter will deactivate but the laser will remain because it also does not update the laser if the default emitter is not active.
+    #Possibly rework laserMove to not create any lasers if no emitters are active. It should be reworked anyway for every active emitter to create a laser.
 
     if objects[y][x][0] in movableBlocks: 
         y = selectedObject[0]
         x = selectedObject[1] #Revert movement, making functions below replace existing box that was removed above. (another solution might print instead)
     else:
         if oldType == 'n' and type == 'b': #If there is a button under and this is a box and this box can be moved
+            colours[oldData1] = False
             try:
                 laserEvents[oldData1](reverse=True,colour=oldData1) #Deactivate the colour if a box is being removed from a button
             except KeyError:
-                print(f"WARNING: '{objects[y][x][1]}' colour has no function set.")
+                print(f"WARNING: '{oldData1}' colour has no function set.")
     # print(spawner)
-    if objects[y][x][0] == 'n' and type == 'b':
+    if objects[y][x][0] == 'n' and type == 'b': #If it is moving a box onto a button
         colours[objects[y][x][1]] = True
         try:
             laserEvents[objects[y][x][1]](reverse=False,colour=objects[y][x][1]) #Activte a colour if the current object is a box and it is moving over a box button.
@@ -1052,15 +1073,17 @@ objectSprites = { #As long as a function is added here with a code, it can be cr
 
 def emitterActivate(reverse,colour):
     '''Activate an emitter'''
-    emitter = laserEmitters[colour]
-    if not reverse:
-        if not emitter[3]:
-            emitterSprite(emitter[0],emitter[1],dir=emitter[2],colour=colour,fade=-1) #Run the emitter function with the fade argument to make it start the animation
-        else:
-            laserMove(emitter[0],emitter[1],emitter[2],split=True) #Update the laser if the emitter is already active, don't play the animation again.
-    elif emitter[3]:
-        emitterSprite(emitter[0],emitter[1],dir=emitter[2],colour=colour,fade=9)
-        #Laser is automatically removed if not updated every tick
+    emitter = laserEmitters[colour] 
+    print(emitter[4])
+    if emitter[4] == 0: #If it is not in an animation (will be reversed if it is)
+        if not reverse: #If the colour is enabled
+            if not emitter[3]:
+                emitterSprite(emitter[0],emitter[1],dir=emitter[2],colour=colour,fade=-1) #Run the emitter function with the fade argument to make it start the animation
+            else:
+                laserMove(emitter[0],emitter[1],emitter[2],split=True) #Update the laser if the emitter is already active, don't play the animation again.
+        elif emitter[3]:
+            emitterSprite(emitter[0],emitter[1],dir=emitter[2],colour=colour,fade=1)
+            #Laser is automatically removed if not updated every tick
 # for i in objects:
 #     print(i)
 

@@ -44,7 +44,8 @@ def leveltemplate(event = ''):
 
 root.bind("<space>",leveltemplate)
 
-def _create_circle(self, x, y, r, **kwargs):
+def _create_circle(self, x, y, r, **kwargs): # https://stackoverflow.com/a/17985217 Modified code from user mgold on stackoverflow. Licenced under CC BY-SA 4.0
+    '''Creates a circle based on a center point and radius rather than two corners like the original oval function.'''
     if 'rY' in kwargs: #rY allows for the radius to be changed vertically seperately for an oval shape
         rY = kwargs['rY']
         kwargs.pop('rY')
@@ -54,6 +55,7 @@ def _create_circle(self, x, y, r, **kwargs):
 Canvas.create_circle = _create_circle
 
 def _create_circle_arc(self, x, y, r, **kwargs):
+    '''The same as above but for an arc.'''
     if "start" in kwargs and "end" in kwargs:
         kwargs["extent"] = kwargs.pop("end") - kwargs["start"]
     if 'rY' in kwargs:
