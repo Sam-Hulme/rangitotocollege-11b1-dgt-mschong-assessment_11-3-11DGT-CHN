@@ -14,32 +14,7 @@ def levelEnd(inactive = False, colour = False): #colour is not used but is passe
     freeze()
     root.after(2000,nextLevel)
 
-def doorOpen(reverse,colour):
-    from laser import doors #Ensure that the doors dictionary is updated
-    for i in doors[colour]:
-        y = i[0]
-        x = i[1]
-        doorReverse = i[2]
-        if reverse and objects[y][x][0] in ['','l','d']: #Door overrides lasers
-            doorSprite(y,x,colour=colour,reverse=doorReverse,open=doorReverse)
-        elif not reverse and objects[y][x][0] in ['','l','d']:
-            doorSprite(y,x,colour=colour,reverse=doorReverse,open=not doorReverse)
-    panels[y][x].tag_raise('frame')
 
-def boxSpawnerActivate(reverse,colour):
-    from laser import boxSpawners
-    y = boxSpawners[colour][0]
-    x = boxSpawners[colour][1]
-    if objects[y][x][0] == 's':
-        # print(f"{colour} spawner activated (reverse: {reverse}) at {y,x}. Current active state: {objects[y][x][2]}")
-        if not reverse and not boxSpawners[colour][2]:
-            boxSpawnerSprite(y,x,active=True,colour=colour)
-        elif reverse and boxSpawners[colour][2]:
-            if boxSpawners[colour][3] != []:
-                for i in boxSpawners[colour][3]:
-                    panels[y][x].after_cancel(i)
-                panels[y][x].unbind('<Button-1>')
-            boxSpawnerSprite(y,x,active=False,colour=colour)
 
 def selectInit(selectedObject,movables):
     '''Automatically select a box and bind movement keys and mouse clicking to boxes'''
@@ -73,11 +48,11 @@ def level0():
     recieverSprite(2,2,laser=False,dir=3,colour='red')
 
 
-    laserEvent(
-        red = levelEnd
-        #Put functions for different colours here
-        #Use lambda for single expression functions
-    )
+    # laserEvent(
+    #     red = levelEnd
+    #     #Put functions for different colours here
+    #     #Use lambda for single expression functions
+    # )
     
     selectInit((2,7),movables)
 
@@ -102,10 +77,10 @@ def level1():
     emitterSprite(8,7,active=False,dir=0)
     recieverSprite(8,2,laser=False,dir=2,colour='red')
 
-    laserEvent(
-        red = levelEnd
-        #Put functions for different colours here
-    )
+    # laserEvent(
+    #     red = levelEnd
+    #     #Put functions for different colours here
+    # )
     selectInit((5,3),movables)
 
 levels.append(level1)
@@ -131,11 +106,11 @@ def level2():
     recieverSprite(1,8,laser=False,dir=1,colour='red')
     recieverSprite(0,3,laser=False,dir=0,colour='green')
 
-    laserEvent(
-        green = doorOpen,
-        red = levelEnd #TODO: Make red reciever always the reciever for winning
-        #Put functions for different colours here
-    )
+    # laserEvent(
+    #     green = doorOpen,
+    #     red = levelEnd #TODO: Make red reciever always the reciever for winning
+    #     #Put functions for different colours here
+    # )
 
 
     selectInit((3,4),movables)
@@ -163,10 +138,10 @@ def level3():
     recieverSprite(8,2,laser=False,dir=2,colour='red')
     recieverSprite(1,9,laser=False,dir=0,colour="green")
 
-    laserEvent(
-       red = doorOpen,
-       green = levelEnd  
-    )
+    # laserEvent(
+    #    red = doorOpen,
+    #    green = levelEnd  
+    # )
 
     selectInit((5,9),movables)
 
@@ -197,11 +172,11 @@ def level4():
     recieverSprite(6,9,laser=False,dir=1,colour='red')
     recieverSprite(1,5,laser=False,dir=3,colour='blue')
 
-    doorOpeners = dict.fromkeys(('red','green'), doorOpen)
-    laserEvent(
-        **doorOpeners,
-        blue = levelEnd
-    )
+    # doorOpeners = dict.fromkeys(('red','green'), doorOpen)
+    # laserEvent(
+    #     **doorOpeners,
+    #     blue = levelEnd
+    # )
 
 
     selectInit((7,3),movables)
@@ -251,11 +226,11 @@ def level5():
     recieverSprite(9,3,laser=False,dir=2,colour='orange')
     recieverSprite(7,9,laser=False,dir=1,colour='red')
 
-    doorOpeners = dict.fromkeys(('green','blue','yellow','purple','orange'), doorOpen)
-    laserEvent(
-        **doorOpeners,
-        red = levelEnd
-    )
+    # doorOpeners = dict.fromkeys(('green','blue','yellow','purple','orange'), doorOpen)
+    # laserEvent(
+    #     **doorOpeners,
+    #     red = levelEnd
+    # )
 
     #TODO: Split laser doesn't move through door opened on the same frame
     #TODO: Change door functions to allow colour to be set when door created, automatically setting up recievers.
@@ -285,11 +260,11 @@ def level6():
     recieverSprite(1,9,dir=1,colour='purple')
     recieverSprite(9,8,dir=2,colour='red')
 
-    emitterActivators = dict.fromkeys(('green','blue','yellow','purple'), emitterActivate)
-    laserEvent(
-        **emitterActivators,
-        red = levelEnd
-    )
+    # emitterActivators = dict.fromkeys(('green','blue','yellow','purple'), emitterActivate)
+    # laserEvent(
+    #     **emitterActivators,
+    #     red = levelEnd
+    # )
 
 
 def level7():
@@ -335,6 +310,7 @@ def level7():
     recieverSprite(0,2,colour='blue',dir=0)
     recieverSprite(0,4,colour='green',dir=0)
     boxButtonSprite(0,0,colour='yellow')
+    boxButtonSprite(5,9,colour='red')
     recieverSprite(0,8,dir=0,colour='purple')
     emitterSprite(9,8,dir=0,colour='yellow')
     setPanel(1,2,'d',colour='yellow')
@@ -347,11 +323,11 @@ def level7():
         doorOpen(reverse,colour)
         emitterActivate(reverse,colour)
 
-    laserEvent(
-        blue = boxSpawnerActivate,
-        green = boxSpawnerActivate,
-        yellow = yellow
-    )
+    # laserEvent(
+    #     blue = boxSpawnerActivate,
+    #     green = boxSpawnerActivate,
+    #     yellow = yellow
+    # )
 
 def level8():
     
@@ -365,9 +341,134 @@ def level8():
 
     selectInit((5,7),movables)
 
-    laserEvent(red = emitterActivate)
+    # laserEvent(red = emitterActivate)
     
-level8()
+
+
+def levelEditor():
+    for y in range(10):
+        for x in range(10):
+            panels[y][x].create_rectangle(0,0,panelWidth-1,panelHeight-1,outline='white',width=1) #Create a border around each panel to highlight the grid objects can be created in.
+    text = Label(root,text='Level Editor',fg='white',bg='black',font=('Arial',20,'bold'))
+    subtext = Label(root,text='Select objects to add to level.',fg='white',bg='black',font=('Arial',14))
+    text.grid(row=0,column=10,columnspan=3,sticky='nsew')
+    subtext.grid(row=1,column=10,columnspan=3,sticky='nsew')
+    selectableObjects = []
+    fakeObjectSprites = {
+        'w': lambda panel,dir,flipped,noborder: setPanelFake(panel,'w'), 
+        'f': lambda panel,dir,flipped,noborder: setPanelFake(panel,'f'),
+        'g': glassSpriteFake,
+        'e': emitterSpriteFake,
+        'r': recieverSpriteFake,
+        'm': mirrorSpriteFake,
+        'p': prismSpriteFake,
+        'd': doorSpriteFake,
+        's': boxSpawnerSpriteFake,
+        'n': boxButtonSpriteFake
+    }
+    global objectData
+    objectData = {}
+    for n,sprite,i in zip(fakeObjectSprites, fakeObjectSprites.values(), range(10)):
+        panel = Canvas(root,width=48,height=48,bg='black',highlightthickness=0,bd=0)
+        if i < 3:
+            panel.grid(row=i+2,column=10)
+        elif i < 7:
+            panel.grid(row=i-1,column=11)
+        else:
+            panel.grid(row=i-5,column=12)
+        root.update_idletasks() #Update info so canvas width and height are accurate.
+        sprite(panel,dir=0,flipped=False,noborder=True)
+        selectableObjects.append(panel)
+        panel.bind("<Button-1>",lambda event: selectObject(panel,n))
+    rotate = Canvas(root,width=48,height=48,bg='black',highlightthickness=0,bd=0)
+    delete = Canvas(root,width=48,height=48,bg='black',highlightthickness=0,bd=0)
+    rect = Canvas(root,width=48,height=48,bg='black',highlightthickness=0,bd=0)
+    rotate.grid(row=6,column=10,rowspan=2)
+    delete.grid(row=6,column=11,rowspan=2)
+    rect.grid(row=6,column=12,rowspan=2)
+
+    root.update_idletasks()
+    rotateSprite(rotate)
+    deleteSprite(delete)
+    rectSprite(rect)
+
+    colours = {False: "#4E4E4E"} #A dictioanry of colour codes with one for a default colour
+    colours.update(laserColours.items())
+
+    colourFrame = Frame(root, bg='black', borderwidth=0)
+    colourFrame.grid(row=8,column=10,columnspan=3)
+    colourButtons = {}
+    for n, c, i in zip(colours, colours.values(), range(len(laserColours))):
+        panel = Canvas(colourFrame,width=36,height=36,bg='black',highlightthickness=0,bd=0)
+        panel.grid(row=0,column=i,padx=2)
+        root.update_idletasks()
+        w = panel.winfo_width()
+        h = panel.winfo_height()
+        circle = panel.create_oval(2,2,w-2,h-2,fill=c,outline="#9a9a9a",width=4) #2 off the edges to fit the full circle and outline in the canvas.
+        panel.bind("<Button-1>",lambda event: selectColour(n))
+        colourButtons[n] = [panel,circle]
+
+
+    def selectObject(panel,object):
+        global objectData
+        try:
+            #Reset the previously selected panel and clear the objectData dictionary
+            objectData['panel'].delete('selected')
+            fakeObjectSprites[objectData['object']](objectData['panel'],dir=0,flipped=False,noborder=True)
+        except KeyError:
+            pass #Continue if there is no panel previously selected
+        objectData = {}
+        selectIndicator(panel)
+        objectData['object'] = object
+        objectData['panel'] = panel
+        objectData['dir'] = 0
+        objectData['flipped'] = False
+        if object in ['e','s']: #Objects with default colours
+            objectData['colour'] = False
+        else: #Objects that need a colour
+            objectData['colour'] = 'red'
+        objectData['reverse'] = False
+    
+    def rotateObject():
+        try:
+            objectData['panel']
+        except KeyError:
+            return #Don't run if an object hasn't been selected yet.
+        if objectData['object'] == 'm':
+            objectData['flipped'] = not objectData['flipped'] 
+        elif objectData['object'] == 'd':
+            objectData['reverse'] = not objectData['reverse'] #Change whether the door is open or closed when unpowered
+        else:
+            dir = objectData['dir']
+            dir += 1
+            if dir > 3:
+                dir = 0
+            objectData['dir'] = dir
+        fakeObjectSprites[objectData['object']](objectData['panel'],dir=objectData['dir'],flipped=objectData['flipped'],reverse=objectData['reverse'])
+
+    def selectColour(colour):
+        try:
+            objectData['panel']
+        except KeyError:
+            return #Don't run if an object hasn't been selected yet.
+        if colour == False and objectData['object'] not in ['e','s']:
+            colour = 'red' #If the colour is false but the object can't have a default colour, set the colour to red.
+            #TODO: Make default colour disappear when an object that requires a colour is selected.
+        try: #Remove the green outline from the previous colour if it exists.
+            colourButtons[colour][0].itemconfigure(colourButtons[colour][1],outline="#9a9a9a")
+        except KeyError:
+            pass
+        objectData['colour'] = colour
+        fakeObjectSprites[objectData['object']](objectData['panel'],colour=objectData['colour'])
+        
+        colourButtons[colour][0].itemconfigure(colourButtons[colour][1],outline="#6cca41")
+
+
+
+        
+        
+
+levelEditor()
 
 
 root.mainloop() #Ensure all functions are defined before this is run.

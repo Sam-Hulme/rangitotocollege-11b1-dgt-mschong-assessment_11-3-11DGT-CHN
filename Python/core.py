@@ -29,6 +29,7 @@ def init(columns,rows,width,height):
         global panelHeight
         panelWidth = width
         panelHeight = height
+    root.update_idletasks()
         # return panels
 
 

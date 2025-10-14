@@ -56,7 +56,8 @@ laserEmitters = {
     False: [0,0,0,False]
 }
 laserRecievers = {}
-laserEvents = {}
+# laserEvents = {}
+colourEvents = {}
 doors = {}
 colours = {} #The state of all the colours
 frozen = False
@@ -79,11 +80,12 @@ def nextLevel(): #Reset everything and start the next level
     global objects
     global laserEmitters
     global laserRecievers
-    global laserEvents
+    # global laserEvents
     global frozen
     global doors
     global boxSpawners
     global colours
+    global colourEvents
     for y in range(10):
         for x in range(10):
             panels[y][x].delete("all") #Clear all panels in the level
@@ -95,10 +97,11 @@ def nextLevel(): #Reset everything and start the next level
     selectedObject = []
     laserEmitters = {False: [0,0,0,False]}
     laserRecievers = {}
-    laserEvents = {}
+    # laserEvents = {}
     doors = {}
     boxSpawners = {}
     colours = {}
+    colourEvents = {}
     frozen = False
 
     level += 1
@@ -479,6 +482,7 @@ def emitterSprite(y,x,**data):
     else:
         laserEmitters[colour] = [y,x,dir,active,fade] #Store data in a variable that can be accessed to activate the reciever
 
+
 def recieverSprite(y,x,**data): 
     '''
     data:
@@ -659,7 +663,7 @@ def boxSpawnerSprite(y,x,**data):
                 active = True #Active defaults to true if the spawner doesn't have a colour
             else:
                 active = False
-
+    
     boxSpawners[colour] = [y,x,active]
     # try:
     #     colourActive = laserRecievers[colour][3] #Check whether or not the reciever for this colour is active
@@ -677,8 +681,8 @@ def boxSpawnerSprite(y,x,**data):
         for objY in range(10):
             for objX in range(10):
                 try:
-                    if objects[objY][objX][1] == colour and objects[objY][objX][0] == 'b': #Look for a box associated with this colour
-                        print(objects[objY][objX])
+                    if objects[objY][objX][1] == colour and (objects[objY][objX][0] == 'b' or objects[objY][objX][0] == 'w'): #Look for a box associated with this colour (box is stored as a wall when breaking to block lasers)
+                        # print(objects[objY][objX])
                         exists = True
                         break #If it finds a box associated with this spawner already
                 except IndexError:
@@ -752,6 +756,7 @@ def boxSpawnerSprite(y,x,**data):
         # print(f"{colour}: creating box at {y},{x}")
         panels[y][x].bind('<Button-1>',objectSelect)
     boxSpawners[colour].append(openAnimEvent)
+    
     objects[y][x][0] = 's'
     objects[y][x][1] = open
     objects[y][x][2] = colour
@@ -773,14 +778,16 @@ def boxButtonSprite(y,x,**data):
     panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill="#5e3c3c",outline="#525252",width=32,tags='main')
 
 
-    boxButtonFrame(y,x,borderColour) #Create a frame around it
+    boxButtonFrame(panels[y][x],borderColour) #Create a frame around it
 
     objects[y][x][0] = 'n' #B is taken by box so n is used (buttoN)
     objects[y][x][1] = '' #Unused
     objects[y][x][2] = colour 
 
-def boxButtonFrame(y,x,colour):
-    panels[y][x].create_rectangle(0,0,panelWidth,panelHeight,fill='',outline=colour,width=8,tags='frame') 
+def boxButtonFrame(panel,colour):
+    panelWidth = panel.winfo_width()
+    panelHeight = panel.winfo_height()
+    panel.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline=colour,width=8,tags='frame') 
     outlineCoords = [(0,-1,panelHeight),(-1,panelHeight-4,panelWidth),(panelWidth-4,-1,panelHeight),(-1,0,panelWidth)] 
     for r in range(4): #Create alternating stripe pattern around the button, the same as for spawners.
         dimension = outlineCoords[r][2] #The panel dimension to use
@@ -801,7 +808,7 @@ def boxButtonFrame(y,x,colour):
                 lineY -= 1
             elif r == 3:
                 lineX -= 1
-            panels[y][x].create_rectangle(lineX,lineY,lineX+xOffset,lineY+yOffset,fill='black',tags='frame')
+            panel.create_rectangle(lineX,lineY,lineX+xOffset,lineY+yOffset,fill='black',tags='frame')
 
 
 def laserUpdate():
@@ -881,7 +888,7 @@ def laserUpdate():
                 continue #If the colour is not associated with a reciever, continue to the next colour
             try:
                 reverse = not colours[i]
-                laserEvents[i](reverse,colour=i) #Run the event function in reverse mode to do things such as close doors when reciever is deactivated.
+                activateColour(reverse,colour=i) #Run the event function in reverse mode to do things such as close doors when reciever is deactivated.
             except KeyError:
                 print(f"WARNING: '{i}' colour has no function set.")
     # if first or not split:
@@ -923,10 +930,10 @@ def laserUpdate():
                 type = objects[y][x][0]
                 if type == 'n': #If a button is found (meaning there is no box on top)
                     colours[objects[y][x][2]] = False
-                    laserEvents[objects[y][x][2]](reverse=True,colour=objects[y][x][2])
+                    activateColour(reverse=True,colour=objects[y][x][2])
                 elif type == 'b' and objects[y][x][2][0] == 'n': #If a box is found with a button underneath
                     colour = objects[y][x][2][2]
-                    laserEvents[colour](reverse=False,colour=colour)
+                    activateColour(reverse=False,colour=colour)
 
                         
     
@@ -989,6 +996,7 @@ def objectMove(event, object):
     #TODO: Remove the need to define functions in the laserEvent function when creating a level, 
     #      instead coloured objects should add their respective activation function to a list/dictionary when created automatically that is run during laserUpdate()
     #      This will make the level editor much easier to add.
+    #TODO: Moving a box to a button that activates it's spawner will cause the spawner to spawn a new box, possibly due to the box moving and not existing when the spawner is activated.
 
     if objects[y][x][0] in movableBlocks: 
         y = selectedObject[0]
@@ -997,14 +1005,14 @@ def objectMove(event, object):
         if oldType == 'n' and type == 'b': #If there is a button under and this is a box and this box can be moved
             colours[oldData2] = False
             try:
-                laserEvents[oldData2](reverse=True,colour=oldData2) #Deactivate the colour if a box is being removed from a button
+                activateColour(reverse=True,colour=oldData2) #Deactivate the colour if a box is being removed from a button
             except KeyError:
                 print(f"WARNING: '{oldData2}' colour has no function set.")
     # print(spawner)
     if objects[y][x][0] == 'n' and type == 'b': #If it is moving a box onto a button
         colours[objects[y][x][2]] = True
         try:
-            laserEvents[objects[y][x][2]](reverse=False,colour=objects[y][x][2]) #Activte a colour if the current object is a box and it is moving over a box button.
+            activateColour(reverse=False,colour=objects[y][x][2]) #Activte a colour if the current object is a box and it is moving over a box button.
         except KeyError:
             print(f"ERROR: '{objects[y][x][2]}' colour has no function set.")
     # if objects[y][x][0] == 'n':
@@ -1023,7 +1031,7 @@ def objectMove(event, object):
             colour = laserColours[objects[y][x][2][2]]
         except KeyError:
             colour = 'white'
-        boxButtonFrame(y,x,colour) #Create a frame around the box to show that it is on a button
+        boxButtonFrame(panels[y][x],colour) #Create a frame around the box to show that it is on a button
     else:
         selectIndicator()
     # print(selectedObject)
@@ -1044,24 +1052,26 @@ def objectSelect(event, object = 0):
     # print(f"object at {y},{x} selected")
     selectIndicator()
 
-def selectIndicator():
-    global selectedObject
-    x = selectedObject[1]
-    y = selectedObject[0]
-    if objects[y][x][0] == 's':
-        return #Dont draw the indicator for box spawners (these cant be moved and are selected at the start to select the box they spawn)
-    panels[y][x].delete('selected')
-    panels[y][x].create_rectangle(0,0,panelWidth,panelHeight, outline="green", width=16, fill='', tags='selected') #Empty fill to make it only an outline
-    panels[y][x].tag_raise('frame')
+def selectIndicator(panel = False):
+    if panel == False:
+        global selectedObject
+        x = selectedObject[1]
+        y = selectedObject[0]
+        panel = panels[y][x]
+        if objects[y][x][0] == 's':
+            return #Dont draw the indicator for box spawners (these cant be moved and are selected at the start to select the box they spawn)
+    panel.delete('selected')
+    panel.create_rectangle(0,0,panelWidth,panelHeight, outline="green", width=16, fill='', tags='selected') #Empty fill to make it only an outline
+    panel.tag_raise('frame')
     
 def selectAnimation(y,x):
     global selectLoopFrames
     #TODO: make animation for selected object frame
     
 
-def laserEvent(**events):
-    global laserEvents
-    laserEvents = events
+# def laserEvent(**events):
+#     global laserEvents
+#     laserEvents = events
 
 
 objectSprites = { #As long as a function is added here with a code, it can be created with setPanel(), fillRect(), and other more specific functions.
@@ -1077,21 +1087,441 @@ objectSprites = { #As long as a function is added here with a code, it can be cr
     'n': boxButtonSprite
 }
 
+def doorOpen(reverse,colour):
+    try:
+        for i in doors[colour]:
+            y = i[0]
+            x = i[1]
+            doorReverse = i[2]
+            if reverse and objects[y][x][0] in ['','l','d']: #Door overrides lasers
+                doorSprite(y,x,colour=colour,reverse=doorReverse,open=doorReverse)
+            elif not reverse and objects[y][x][0] in ['','l','d']:
+                doorSprite(y,x,colour=colour,reverse=doorReverse,open=not doorReverse)
+        panels[y][x].tag_raise('frame')
+    except KeyError:
+        return
+
+def boxSpawnerActivate(reverse,colour):
+    try:
+        y = boxSpawners[colour][0]
+        x = boxSpawners[colour][1]
+        if objects[y][x][0] == 's':
+            # print(f"{colour} spawner activated (reverse: {reverse}) at {y,x}. Current active state: {objects[y][x][2]}")
+            if not reverse and not boxSpawners[colour][2]:
+                boxSpawnerSprite(y,x,active=True,colour=colour)
+            elif reverse and boxSpawners[colour][2]:
+                if boxSpawners[colour][3] != []:
+                    for i in boxSpawners[colour][3]:
+                        panels[y][x].after_cancel(i)
+                    panels[y][x].unbind('<Button-1>')
+                boxSpawnerSprite(y,x,active=False,colour=colour)
+    except KeyError:
+        return
+
 def emitterActivate(reverse,colour):
     '''Activate an emitter'''
-    emitter = laserEmitters[colour] 
-    # print(emitter[4])
-    if emitter[4] == 0: #If it is not in an animation (will be reversed if it is)
-        if not reverse: #If the colour is enabled
-            if not emitter[3]:
-                emitterSprite(emitter[0],emitter[1],dir=emitter[2],colour=colour,fade=-1) #Run the emitter function with the fade argument to make it start the animation
-            # else:
-            #     laserUpdate() #Update the laser if the emitter is already active, don't play the animation again.
-        elif emitter[3]:
-            emitterSprite(emitter[0],emitter[1],dir=emitter[2],colour=colour,fade=1)
-            #Laser is automatically removed if not updated every tick
+    try:
+        emitter = laserEmitters[colour] 
+        # print(emitter[4])
+        if emitter[4] == 0: #If it is not in an animation (will be reversed if it is)
+            if not reverse: #If the colour is enabled
+                if not emitter[3]:
+                    emitterSprite(emitter[0],emitter[1],dir=emitter[2],colour=colour,fade=-1) #Run the emitter function with the fade argument to make it start the animation
+                # else:
+                #     laserUpdate() #Update the laser if the emitter is already active, don't play the animation again.
+            elif emitter[3]:
+                emitterSprite(emitter[0],emitter[1],dir=emitter[2],colour=colour,fade=1)
+                #Laser is automatically removed if not updated every tick
+    except KeyError:
+        return
+    
+def activateColour(reverse,colour):
+    '''Run all the colour activation functions for this colour, which will do nothing if not applicable.'''
+    doorOpen(reverse,colour)
+    boxSpawnerActivate(reverse,colour)
+    emitterActivate(reverse,colour)
 # for i in objects:
 #     print(i)
 
 
+#Fake versions of all the objects that are non-functional sprites with no actual code.
+#Doesn't include laser or box sprites because these can't be made in the level editor.
 
+def mirrorSpriteFake(panel,**data):
+    '''
+    data:
+    flipped (bool)
+    '''
+    flipped = data['flipped'] #Object data (direction, colour, ect) is passed through **kwargs so that fillRect can work for all of them
+    panelWidth = panel.winfo_width()
+    panelHeight = panel.winfo_height()
+    panel.delete("main")
+    panel.create_rectangle(0,0,panelWidth,panelHeight,outline="#787FB6",width=8,fill="#171717", tags="main")
+    startX = panelWidth/4.5
+    endX = panelWidth-panelWidth/4.5
+    if flipped:
+        temp = startX #Temporarily write startX to a variable so they can be swapped
+        startX = endX
+        endX = temp
+    panel.create_line(startX,panelHeight/4.5,endX,panelHeight-panelHeight/4.5,fill="#62f960",width=5, tags="main")
+
+def prismSpriteFake(panel,**data):
+    '''
+    data:
+    dir (int)
+    '''
+    dir = data['dir']
+    panelWidth = panel.winfo_width()
+    panelHeight = panel.winfo_height()
+
+    panel.delete("main")
+    panel.create_rectangle(0,0,panelWidth,panelHeight,outline="#EE78EE",width=8,fill="#3C3C3C", tags='main')
+    w = panelWidth
+    h = panelHeight
+    scale = 4
+    xq1 = w/scale #x quarter 1
+    xq2 = w/2
+    xq3 = w-w/scale
+    yq1 = h/scale
+    yq2 = h/2
+    yq3 = h-h/scale
+
+
+    x1 = xq2 #Half way across
+    y1 = yq1 #A quarter down
+
+    x2 = xq1 #A quarter across
+    y2 = yq3 #3 quarters down
+
+    x3 = xq3 #3 quarters across
+    y3 = yq3 #3 quarters down
+    if (dir == 2):
+        y2 = h/scale
+        y3 = h/scale
+        y1 = h-h/scale
+    elif dir == 1:
+        x1 = xq1
+        x3 = xq3
+        y3 = yq2
+    elif dir == 3:
+        x1 = xq3
+        x2 = xq3
+        y3 = xq2
+        x3 = xq1
+
+    # elif dir == 1:
+    #     x1 = 
+    panel.create_polygon(x1,y1,x2,y2,x3,y3, fill="#A7A7A7",tags='main')
+
+def glassSpriteFake(panel,**data):
+    '''
+    data:
+    laser (bool) = False
+    '''
+    if 'laser' in data:
+        laser = data['laser']
+    else:
+        laser = False
+    panelWidth = panel.winfo_width()
+    panelHeight = panel.winfo_height()
+    if not laser:
+        panel.delete('main')
+    panel.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline='#EEEEEE',width=8,tags='main')
+    w = panelWidth/9
+    h = panelHeight/9
+
+    panel.create_line(w*2,h,w,h*2,width=4,fill='#EEEEEE',tags='main')
+    panel.create_line(panelWidth-w*2,panelHeight-h,panelWidth-w,panelHeight-w*2,width=4,fill='#EEEEEE',tags='main')
+
+def emitterSpriteFake(panel,**data):
+    '''
+    data:
+    active (bool) = False,
+    dir (int),
+    colour (string/bool) = False,
+    fade (int) = 0
+    '''
+    try:
+        active = data['active']
+    except KeyError:
+        active = False
+    try:
+        colour = data['colour']
+    except KeyError:
+        colour = False
+    try:
+        fade = data['fade']
+    except KeyError:
+        fade = 0
+    dir = data['dir'] #As with most things, 0 = up, 1 = right, 2 = down, and 3 = left
+    panelWidth = panel.winfo_width()
+    panelHeight = panel.winfo_height()
+
+    w = panelWidth
+    h = panelHeight
+    if active:
+        centerColour = "#d10202"
+        outerColour = "#FF6A6A"
+    else:
+        centerColour = "#AFAFAF"
+        outerColour = "#AFAFAF"
+    if dir == 0: #Change location and angle variables based on direction of emitter
+        coordsTip = w//2, h//3
+        leftBase = w/(64/22), h
+        rightBase = w/(w/42), h
+        arcCenter = w//2, h//6+h//20
+        circleAngle = 270
+        angleOffsetStart = 0
+        angleOffsetEnd = 2
+    elif dir == 1:
+        coordsTip = round(w/1.5), h//2
+        leftBase = 0, h/(64/22)
+        rightBase = 0, h/(64/42)
+        arcCenter = w//1.2-w//20, h//2
+        circleAngle = 180
+        angleOffsetStart = 0 
+        angleOffsetEnd = 2
+    elif dir == 2:
+        coordsTip = w//2, round(h/1.5) #Needs to be rounded up ('//' divides and floors)
+        leftBase = w/(64/22), 0
+        rightBase = w/(w/42), 0
+        arcCenter = w//2, h//1.2-h//20
+        circleAngle = 90
+        angleOffsetStart = 2
+        angleOffsetEnd = 0
+    elif dir == 3:
+        coordsTip = w//3, h//2
+        leftBase = w, h/(64/22)
+        rightBase = w, h/(64/42)
+        arcCenter = w//6+w//20, h//2
+        circleAngle = 0
+        angleOffsetStart = 2
+        angleOffsetEnd = 0
+
+    if colour:
+        ringColour = frameColours[colour]
+    else:
+        ringColour = "#AFAFAF"
+    panel.create_polygon(*coordsTip, *leftBase, *rightBase, fill="#5E5E5E",tags='main')
+    panel.create_circle(*coordsTip, w//10,rY=h//10, fill=centerColour, outline='',tags='main')
+    panel.create_circle(*coordsTip, w//6,rY=h//6, outline=outerColour, fill='',width=3,tags='main')
+    panel.create_circle_arc(*arcCenter, w//2-w//20, rY=h//2-h//20, style='arc', outline=ringColour, fill='', width=3, start=circleAngle-14-angleOffsetStart, end=circleAngle+14+angleOffsetEnd,tags='main')
+    panel.create_circle_arc(*arcCenter, w//2+w//20, rY=h//2+h//20, style='arc', outline=ringColour, fill='', width=3, start=circleAngle-15-angleOffsetStart, end=circleAngle+15+angleOffsetEnd,tags='main')
+
+def recieverSpriteFake(panel,**data):
+    '''
+    data:
+    laser (bool) = False,
+    dir (int),
+    colour (string)
+    '''
+    try:
+        laser = data['laser']
+    except KeyError:
+        laser = False
+    dir = data['dir']
+    try:
+        colour = data['colour']
+    except KeyError:
+        colour = 'red'
+    panelWidth = panel.winfo_width()
+    panelHeight = panel.winfo_height()
+
+    panel.delete("main")
+    try:
+        outline = laserColours[colour]
+    except KeyError:
+        outline = "#FFFFFF" #If the colour is not yet set in the dictionary, use a placeholder
+    oval = panel.create_oval(0,panelHeight/2,panelWidth,panelHeight,outline=outline,fill="#3e3e3e",width=6, tags="main")
+    if laser:
+        panel.itemconfig(oval, fill="#f88080")
+
+def doorSpriteFake(panel,**data):
+    '''
+    data:
+    colour (string),
+    reverse (bool) = False,
+    open (bool) = False,
+    noborder (bool) = False
+
+    Note: if reverse is true, open must also be true on creation or some weird shenanigans occur
+    '''
+    try:
+        colour = data['colour']
+    except KeyError:
+        colour = 'red'
+    try:
+        reverse = data['reverse'] #Reverse determines whether the door is open or closed when the colour is active
+    except KeyError:
+        reverse = False
+    try:
+        open = data['open']
+    except KeyError:
+        open = False
+    try:
+        noborder = data['noborder']
+    except KeyError:
+        noborder = False
+    panelWidth = panel.winfo_width()
+    panelHeight = panel.winfo_height()
+
+    panel.delete('main')
+    panel.delete('frame')
+    if not noborder:
+        panel.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline=frameColours[colour],width=8,tags='frame')
+    if not open:
+        panel.create_rectangle(0,0,panelWidth,panelHeight,fill="#F3C873", tags="main")
+    
+    panel.tag_raise("frame")
+
+def boxSpawnerSpriteFake(panel,**data):
+    '''
+    data:
+    open (int) = 0,
+    colour (string/bool) = False,
+    active (bool) 
+    '''
+    try:
+        open = data['open']
+    except KeyError:
+        open = 0
+    try:
+        colour = data['colour']
+    except KeyError:
+        colour = False
+    try:
+        active = data['active']
+    except KeyError:
+        if not colour:
+            active = True #Active defaults to true if the spawner doesn't have a colour
+        else:
+            active = False
+    panelWidth = panel.winfo_width()
+    panelHeight = panel.winfo_height()
+
+    panel.delete('main')
+
+    left = panelWidth/2-1
+    right = panelWidth/2+1
+    panel.create_rectangle(0,0,panelWidth,panelHeight,fill="#292929",tags='main')
+    panel.create_rectangle(0,0,left,panelHeight,fill="#7D7D7D",tags='main',outline='#292929')
+    panel.create_rectangle(panelWidth,0,right-1,panelHeight,fill="#7D7D7D",tags='main',outline='#292929')
+
+    for i in range(10): 
+        if i%2 == 0:
+            side = left
+        else:
+            side = right
+        height = i*(panelHeight//10) + 2
+        panel.create_line(side,height,side,height+(panelHeight//10),fill="#535353",width=4,tags='main')
+    try:
+        if active:
+            borderColour = laserColours[colour] 
+        else:
+            borderColour = frameColours[colour] #Set border colour to darker colour if inactive
+    except KeyError:
+        borderColour = 'yellow'
+
+    panel.create_rectangle(0,0,panelWidth,panelHeight,fill='',outline=borderColour,width=8,tags='main') 
+
+    outlineCoords = [(0,-1,panelHeight),(-1,panelHeight-4,panelWidth),(panelWidth-4,-1,panelHeight),(-1,0,panelWidth)] #-1 is the dimension that changes
+    for r in range(4):
+        dimension = outlineCoords[r][2] #The panel dimension to use
+        # print(r)
+        for i in range(1,11,2): #From 1 to 10 skipping every other number (1, 3, 5, ...)
+            lineX = outlineCoords[r][0]
+            lineY = outlineCoords[r][1]
+            if lineX == -1:
+                lineX = i*(dimension//10)-1
+                yOffset = 3
+                xOffset = dimension//10
+            if lineY == -1:
+                lineY = i*(dimension//10)-1
+                xOffset = 3
+                yOffset = dimension//10
+            # print(lineX,lineY)
+            if r == 2:
+                lineY -= 1
+            elif r == 3:
+                lineX -= 1
+            panel.create_rectangle(lineX,lineY,lineX+xOffset,lineY+yOffset,fill='black',tags='main')
+
+def boxButtonSpriteFake(panel,**data):
+    '''
+    data:
+    colour (string)
+    '''
+    try:
+        colour = data['colour']
+    except KeyError:
+        colour = 'red'
+    panelWidth = panel.winfo_width()
+    panelHeight = panel.winfo_height()
+
+    try:
+        borderColour = frameColours[colour]
+    except KeyError:
+        borderColour = 'white'
+    panelWidth = panel.winfo_width()
+    panelHeight = panel.winfo_height()
+
+    panel.delete('main')
+    panel.create_rectangle(0,0,panelWidth,panelHeight,fill="#5e3c3c",outline="#525252",width=32,tags='main')
+
+def setPanelFake(panel,type,**data):
+    panel.delete('main')
+    if type in objectColours:
+        panel.create_rectangle(0,0,panelWidth,panelHeight,fill=objectColours[type], tags="main")
+
+quarter = 4/3
+def rotateSprite(panel):
+    '''Rotate icon sprite.'''
+    w = panel.winfo_width()
+    h = panel.winfo_height()
+    panel.delete('main')
+    panel.create_rectangle(2,2,w-3,h-3,fill="#676767",outline='#A5A5A5',width=5,tags='main')
+    for i in range(2): #Create the normal sprite and a shadow
+        if i == 1:
+            offset = 0
+            colour = "#BFD9FA"
+        else:
+            offset = 2
+            colour = "#5B5B5B"
+        panel.create_arc(w/4+offset, h/4+offset+h/24, w/quarter+offset, h/quarter+offset+h/24,start=0,extent=-270,outline=colour,width=4,style=ARC,tags='main')
+        panel.create_line(w/2+offset, h/4+offset+h/24, w/1.6+offset, h/4+offset+h/24,fill=colour,width=4,tags='main')
+        panel.create_line(w/1.7+offset, h/4+offset+h/24, w/2.2+offset, h/4-h/7+offset+h/24,fill=colour,width=4,tags='main')
+        panel.create_line(w/1.7+offset, h/4+offset+h/24, w/2.2+offset, h/4+h/7+offset+h/24,fill=colour,width=4,tags='main')
+
+    #TODO: w/1.25 is not correct, use w/1.333333 instead (use 4/3 to round properly)
+def deleteSprite(panel):
+    w = panel.winfo_width()
+    h = panel.winfo_height()
+    panel.delete('main')
+    panel.create_rectangle(2,2,w-3,h-3,fill="#676767",outline='#A5A5A5',width=5,tags='main')
+    for i in range(2): #Create the normal sprite and a shadow
+        if i == 1:
+            offset = 0
+            colour = "#BFD9FA"
+        else:
+            offset = 2
+            colour = "#5B5B5B"
+        panel.create_line(w/4+offset,h/4+offset,w/quarter+offset,h/quarter+offset,fill=colour,width=4,tags='main')
+        panel.create_line(w/quarter+offset,h/4+offset,w/4+offset,h/quarter+offset,fill=colour,width=4,tags='main')
+
+def rectSprite(panel):
+    w = panel.winfo_width()
+    h = panel.winfo_height()
+    panel.delete('main')
+    panel.create_rectangle(2,2,w-3,h-3,fill="#676767",outline='#A5A5A5',width=5,tags='main')
+    for i in range(2): #Create the normal sprite and a shadow
+        if i == 1:
+            offset = 0
+            colour = "#BFD9FA"
+            pluscolour = 'white'
+        else:
+            offset = 2
+            colour = "#5B5B5B"
+            pluscolour = colour
+        panel.create_rectangle(w/4+offset,h/4+offset,w/quarter+offset,h/quarter+offset,fill='',outline=colour,width=4,tags='main')
+        panel.create_line(w/quarter+offset,h/quarter-h/6+offset,w/quarter+offset,h/quarter+h/6+offset,fill=pluscolour,width=4,tags='main')
+        panel.create_line(w/quarter-w/6+offset,h/quarter+offset,w/quarter+w/6+offset,h/quarter+offset,fill=pluscolour,width=4,tags='main')
