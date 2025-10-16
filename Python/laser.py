@@ -45,7 +45,7 @@ movableBlocks = ['m', 'w', 'e', 'r', 'd', 'p',
     n = box button
 """
 # TODO: change this list to a list of things that don't block boxes, which there are much less of.
-laserBlocks = ['f', 'w', 'd', 's', 'n']
+laserBlocks = ['f', 'w', 'd', 's', 'n', 'e']
 '''Things that should block lasers and don't do anything else with lasers'''
 movableObjects = ['m', 'p', 'b']
 
@@ -125,6 +125,7 @@ def setPanel(y, x, type, **data):  # set a single panel to a solid colour object
     elif not type == '':
         objectSprites[type](y, x, **data)
     else:
+        panels[y][x].delete('frame')
         objects[y][x] = ['', '', '']
 
     return panels[y][x]
@@ -512,7 +513,7 @@ def emitterSprite(y, x, **data):
         emitterSprite(y, x, dir=dir, active=True)
         laserUpdate()
 
-    if colour == False and active == False:
+    if colour == False and active == False and not frozen:
         panels[y][x].bind(
             "<Button-1>", lambda event: activateDefault(y, x, dir))
     else:
@@ -747,7 +748,7 @@ def boxSpawnerSprite(y, x, **data):
     # If the spawner is inactive or isnt replacing another spawner, reset open to 0
     if open > 0 and (not active or not objects[y][x][0] == 's'):
         open = 0
-    elif active and open == 0:
+    elif active and open == 0 and not frozen:
         exists = False
         for objY in range(10):
             for objX in range(10):
@@ -1152,6 +1153,8 @@ def objectMove(event, object):
 
 
 def objectSelect(event, object=0):
+    if frozen:
+        return
     if (event != 0):
         object = event.widget
     global selectedObject
@@ -1280,7 +1283,7 @@ def activateColour(reverse, colour):
 # Fake versions of all the objects that are non-functional sprites with no actual code.
 # Doesn't include laser or box sprites because these can't be made in the level editor.
 
-def mirrorSpriteFake(panel, **data):
+def mirrorSpriteFake(panel, setData=False, **data):
     '''
     data:
     flipped (bool)
@@ -1299,9 +1302,22 @@ def mirrorSpriteFake(panel, **data):
         endX = temp
     panel.create_line(startX, panelHeight/4.5, endX, panelHeight -
                       panelHeight/4.5, fill="#62f960", width=5, tags="main")
+    
+    if setData:
+        # Set data of the object in the objects list.
+        gridInfo = panel.grid_info()
+        y = gridInfo['row']
+        x = gridInfo['column']
+        under = []
+        under.append(objects[y][x][0])
+        under.append(objects[y][x][1])
+        under.append(objects[y][x][2])
+        objects[y][x][0] = "m"
+        objects[y][x][1] = flipped
+        objects[y][x][2] = under
 
 
-def prismSpriteFake(panel, **data):
+def prismSpriteFake(panel, setData=False, **data):
     '''
     data:
     dir (int)
@@ -1349,8 +1365,21 @@ def prismSpriteFake(panel, **data):
     #     x1 =
     panel.create_polygon(x1, y1, x2, y2, x3, y3, fill="#A7A7A7", tags='main')
 
+    if setData:
+        # Set data of the object in the objects list.
+        gridInfo = panel.grid_info()
+        y = gridInfo['row']
+        x = gridInfo['column']
+        under = []
+        under.append(objects[y][x][0])
+        under.append(objects[y][x][1])
+        under.append(objects[y][x][2])
+        objects[y][x][0] = "p"
+        objects[y][x][1] = dir
+        objects[y][x][2] = under
 
-def glassSpriteFake(panel, **data):
+
+def glassSpriteFake(panel, setData=False, **data):
     '''
     data:
     laser (bool) = False
@@ -1371,9 +1400,19 @@ def glassSpriteFake(panel, **data):
     panel.create_line(w*2, h, w, h*2, width=4, fill='#EEEEEE', tags='main')
     panel.create_line(panelWidth-w*2, panelHeight-h, panelWidth-w,
                       panelHeight-w*2, width=4, fill='#EEEEEE', tags='main')
+    
+    if setData:
+        # Set data of the object in the objects list.
+        gridInfo = panel.grid_info()
+        y = gridInfo['row']
+        x = gridInfo['column']
+
+        objects[y][x][0] = "g"
+        objects[y][x][1] = ''
+        objects[y][x][2] = ''
 
 
-def emitterSpriteFake(panel, **data):
+def emitterSpriteFake(panel, setData=False, **data):
     '''
     data:
     active (bool) = False,
@@ -1455,9 +1494,19 @@ def emitterSpriteFake(panel, **data):
                             width=3, start=circleAngle-14-angleOffsetStart, end=circleAngle+14+angleOffsetEnd, tags='main')
     panel.create_circle_arc(*arcCenter, w//2+w//20, rY=h//2+h//20, style='arc', outline=ringColour, fill='',
                             width=3, start=circleAngle-15-angleOffsetStart, end=circleAngle+15+angleOffsetEnd, tags='main')
+    
+    if setData:
+        # Set data of the object in the objects list.
+        gridInfo = panel.grid_info()
+        y = gridInfo['row']
+        x = gridInfo['column']
+
+        objects[y][x][0] = "e"
+        objects[y][x][1] = dir
+        objects[y][x][2] = colour
 
 
-def recieverSpriteFake(panel, **data):
+def recieverSpriteFake(panel, setData=False, **data):
     '''
     data:
     laser (bool) = False,
@@ -1486,8 +1535,18 @@ def recieverSpriteFake(panel, **data):
     if laser:
         panel.itemconfig(oval, fill="#f88080")
 
+    if setData:
+        # Set data of the object in the objects list.
+        gridInfo = panel.grid_info()
+        y = gridInfo['row']
+        x = gridInfo['column']
 
-def doorSpriteFake(panel, **data):
+        objects[y][x][0] = "r"
+        objects[y][x][1] = dir
+        objects[y][x][2] = colour
+
+
+def doorSpriteFake(panel, setData=False, **data):
     '''
     data:
     colour (string),
@@ -1528,8 +1587,17 @@ def doorSpriteFake(panel, **data):
 
     panel.tag_raise("frame")
 
+    if setData:
+        # Set data of the object in the objects list.
+        gridInfo = panel.grid_info()
+        y = gridInfo['row']
+        x = gridInfo['column']
+        objects[y][x][0] = "d"
+        objects[y][x][1] = colour
+        objects[y][x][2] = reverse
 
-def boxSpawnerSpriteFake(panel, **data):
+
+def boxSpawnerSpriteFake(panel, setData=False, **data):
     '''
     data:
     open (int) = 0,
@@ -1608,9 +1676,19 @@ def boxSpawnerSpriteFake(panel, **data):
                 lineX -= 1
             panel.create_rectangle(
                 lineX, lineY, lineX+xOffset, lineY+yOffset, fill='black', tags='main')
+            
+    if setData:
+        # Set data of the object in the objects list.
+        gridInfo = panel.grid_info()
+        y = gridInfo['row']
+        x = gridInfo['column']
+
+        objects[y][x][0] = "s"
+        objects[y][x][1] = open
+        objects[y][x][2] = colour
 
 
-def boxButtonSpriteFake(panel, **data):
+def boxButtonSpriteFake(panel, setData=False, **data):
     '''
     data:
     colour (string)
@@ -1628,20 +1706,62 @@ def boxButtonSpriteFake(panel, **data):
         borderColour = 'white'
     panelWidth = panel.winfo_width()
     panelHeight = panel.winfo_height()
-
+    boxButtonFrame(panel, borderColour)
     panel.delete('main')
     panel.create_rectangle(0, 0, panelWidth, panelHeight,
                            fill="#5e3c3c", outline="#525252", width=32, tags='main')
+    panel.tag_raise('frame')
+    
+    if setData:
+        # Set data of the object in the objects list.
+        gridInfo = panel.grid_info()
+        y = gridInfo['row']
+        x = gridInfo['column']
+
+        objects[y][x][0] = "n"
+        objects[y][x][1] = ''
+        objects[y][x][2] = colour
 
 
-def setPanelFake(panel, type, **data):
+def setPanelFake(panel, type, setData=False, **data):
+    # Panel needs to be named panel_ because data includes a panel value
     panel.delete('main')
     panelWidth = panel.winfo_width()
     panelHeight = panel.winfo_height()
     if type in objectColours:
         panel.create_rectangle(0, 0, panelWidth, panelHeight,
                                fill=objectColours[type], tags="main")
+        if setData:
+            # Set data of the object in the objects list.
+            gridInfo = panel.grid_info()
+            y = gridInfo['row']
+            x = gridInfo['column']
 
+            objects[y][x][0] = type
+            objects[y][x][1] = ''
+            objects[y][x][2] = ''
+    elif type == '':
+        panel.delete('frame')
+        gridInfo = panel.grid_info()
+        y = gridInfo['row']
+        x = gridInfo['column']
+        objects[y][x] = ['','','']
+        # Delete the frame (main is already deleted)
+    else:
+        fakeObjectSprites[type](panel,setData,**data)
+
+fakeObjectSprites = {
+    'w': lambda panel, dir='', flipped='', noborder='', colour='': setPanelFake(panel, 'w'),
+    'f': lambda panel, dir='', flipped='', noborder='', colour='': setPanelFake(panel, 'f'),
+    'g': glassSpriteFake,
+    'e': emitterSpriteFake,
+    'r': recieverSpriteFake,
+    'm': mirrorSpriteFake,
+    'p': prismSpriteFake,
+    'd': doorSpriteFake,
+    's': boxSpawnerSpriteFake,
+    'n': boxButtonSpriteFake
+}
 
 quarter = 4/3
 

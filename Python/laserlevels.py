@@ -349,6 +349,7 @@ def levelEditor():
             panels[y][x].create_rectangle(
                 0, 0, panelWidth-1, panelHeight-1, outline='white', width=1, tags='highlight')
 
+
     text = Label(root, text='Level Editor', fg='white',
                  bg='black', font=('Arial', 20, 'bold'))
     subtext = Label(root, text='Select objects to add to level.',
@@ -356,18 +357,6 @@ def levelEditor():
     text.grid(row=0, column=10, columnspan=3, sticky='nsew')
     subtext.grid(row=1, column=10, columnspan=3, sticky='nsew')
     selectableObjects = []
-    fakeObjectSprites = {
-        'w': lambda panel, dir='', flipped='', noborder='', colour='': setPanelFake(panel, 'w'),
-        'f': lambda panel, dir='', flipped='', noborder='', colour='': setPanelFake(panel, 'f'),
-        'g': glassSpriteFake,
-        'e': emitterSpriteFake,
-        'r': recieverSpriteFake,
-        'm': mirrorSpriteFake,
-        'p': prismSpriteFake,
-        'd': doorSpriteFake,
-        's': boxSpawnerSpriteFake,
-        'n': boxButtonSpriteFake
-    }
     global objectData
     objectData = {}
     for o, sprite, i in zip(fakeObjectSprites, fakeObjectSprites.values(), range(10)):
@@ -433,6 +422,7 @@ def levelEditor():
                 colourButtons[objectData['colour']][1], outline="#9a9a9a")
         except KeyError:
             pass  # Continue if there is no panel previously selected
+        delete.delete('selected')
         objectData = {}
         selectIndicator(panel)
         objectData['object'] = object
@@ -525,27 +515,32 @@ def levelEditor():
         
         panel.itemconfig('highlight', outline=colour, width=3)
 
-    def build(y, x):
+    def build(panel):
         global objectData
         try:
             # Check if an object (or the delete button) has been selected
             objectData['object']
         except KeyError:
             return
-
-        setPanel(y, x, type=objectData['object'], **objectData)
+        try:
+            objectPanel = objectData.pop('panel')
+        except KeyError:
+            pass
+        # Remove the panel item from objectData to prevent issues with the setPanel function
+        setPanelFake(panel, type=objectData['object'], setData=True, **objectData)
+        try:
+            objectData['panel'] = objectPanel
+        except UnboundLocalError:
+            pass
         # Use the setPanel function passing objectData as kwargs. This will only use data needed for the object being created and will delete an object if type=''.
-        panels[y][x].tag_raise("highlight") #Raise the grid to be above the sprite
+        panel.tag_raise("highlight") #Raise the grid to be above the sprite
 
     for y in range(10):
         for x in range(10):
             panels[y][x].bind("<Enter>",lambda event, panel=panels[y][x]: highlightPanel(panel))
             panels[y][x].bind("<Leave>",lambda event, panel=panels[y][x]: panel.itemconfig('highlight', outline="white", width=1)) # Reset the colour.
-            panels[y][x].bind("<Button-1>", lambda event, y=y, x=x: build(y,x))
+            panels[y][x].bind("<Button-1>", lambda event, panel=panels[y][x]: build(panel))
     
-    #TODO: Frames aren't deleted when object is deleted
-    #TODO: Emitters aren't deleted
-    #TODO: Make level freeze when editing (no spawning or click events)
     
 
 levelEditor()
