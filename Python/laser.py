@@ -1,5 +1,4 @@
 """All the functions and variables for the laser game."""
-from core import panelWidth, panelHeight
 from tkinter import *
 from core import *
 
@@ -66,6 +65,7 @@ colours = {}  # The state of all the colours
 frozen = False
 global selectLoop  # The event for the selected rectangle moving animation
 selectLoopFrames = 0
+editorLevelTemp = False
 # def init(): #Run once to initialise an empty level, returns a 2d array with all the canvas objects. Running again will reset the level.
 #     objects = [[]]
 #     for a in panels:
@@ -75,7 +75,14 @@ init(columns=10, rows=10, width=64, height=64)
 from core import panelWidth, panelHeight
 
 
-def nextLevel():  # Reset everything and start the next level
+def nextLevel(load=-1):  # Reset everything and start the next level
+    '''
+    Load the next level.
+    'load' can be: 
+    -1 (default) to load the next level in the levels list
+    [number] to load a specific level
+    -2 to not load a level and just clear everything (another function is used for custom levels)
+    '''
     global level
     global laserFloors
     global laserData
@@ -92,7 +99,8 @@ def nextLevel():  # Reset everything and start the next level
     for y in range(10):
         for x in range(10):
             panels[y][x].delete("all")  # Clear all panels in the level
-            objects[y][x] = ['', '', '']  # Reset object array
+            if not load == -1:
+                objects[y][x] = ['', '', '']  # Reset object array
             panels[y][x].unbind("<Button-1>")
     root.unbind_all("<Key>")
     laserFloors = []  # Reset all variables
@@ -107,8 +115,18 @@ def nextLevel():  # Reset everything and start the next level
     colourEvents = {}
     frozen = False
 
-    level += 1
-    levels[level]()
+    if load == -1:
+        # Automatically load the next level if a custom level isn't being loaded
+        level += 1
+        with open('data.txt') as f:
+            data = f.readlines()
+            # Store the file in a list
+        with open("data.txt", "w") as f:
+            data[0] = str(level) # Replace the first line with the level
+            f.writelines(data) # Set the file to the list
+        levels[level]()
+    elif load >= 0:
+        levels[load]()
 
 
 def freeze():  # Unbind everything to freeze the level
@@ -122,6 +140,8 @@ def setPanel(y, x, type, **data):  # set a single panel to a solid colour object
         panels[y][x].create_rectangle(
             0, 0, panelWidth, panelHeight, fill=objectColours[type], tags="main")
         objects[y][x][0] = type
+        objects[y][x][1] = ''
+        objects[y][x][2] = ''
     elif not type == '':
         objectSprites[type](y, x, **data)
     else:
@@ -193,13 +213,13 @@ def fillRect(startCoords, endCoords, type, **data):  # Fill a rectangle of panel
             if type in objectColours.keys():
                 panels[y][x].create_rectangle(
                     0, 0, panelWidth, panelHeight, fill=objectColours[type], tags="main")
+                objects[y][x][0] = type
+                objects[y][x][1] = ''
+                objects[y][x][2] = ''
             elif not type == '':
                 objectSprites[type](y, x, **data)
             else:
                 objects[y][x] = ['', '', '']
-            objects[y][x][0] = type
-            objects[y][x][1] = ''
-            objects[y][x][2] = ''
             objectsCreated.append(panels[y][x])
     return objectsCreated
     # panels[y][x].create_text(panelWidth/2,panelHeight/2,text=type)
@@ -557,8 +577,6 @@ def doorSprite(y, x, **data):
     colour (string),
     reverse (bool) = False,
     open (bool) = False
-
-    Note: if reverse is true, open must also be true on creation or some weird shenanigans occur
     '''
     colour = data['colour']
     try:
@@ -569,7 +587,7 @@ def doorSprite(y, x, **data):
     try:
         open = data['open']
     except KeyError:
-        open = False
+        open = reverse
 
     global doors
     panels[y][x].delete('main')
@@ -1177,6 +1195,8 @@ def selectIndicator(panel=False):
         global selectedObject
         x = selectedObject[1]
         y = selectedObject[0]
+        global panelWidth
+        global panelHeight
         panel = panels[y][x]
         if objects[y][x][0] == 's':
             # Dont draw the indicator for box spawners (these cant be moved and are selected at the start to select the box they spawn)
@@ -1276,8 +1296,7 @@ def activateColour(reverse, colour):
     doorOpen(reverse, colour)
     boxSpawnerActivate(reverse, colour)
     emitterActivate(reverse, colour)
-# for i in objects:
-#     print(i)
+
 
 
 # Fake versions of all the objects that are non-functional sprites with no actual code.
@@ -1308,13 +1327,9 @@ def mirrorSpriteFake(panel, setData=False, **data):
         gridInfo = panel.grid_info()
         y = gridInfo['row']
         x = gridInfo['column']
-        under = []
-        under.append(objects[y][x][0])
-        under.append(objects[y][x][1])
-        under.append(objects[y][x][2])
         objects[y][x][0] = "m"
         objects[y][x][1] = flipped
-        objects[y][x][2] = under
+        objects[y][x][2] = ['','','']
 
 
 def prismSpriteFake(panel, setData=False, **data):
@@ -1370,13 +1385,9 @@ def prismSpriteFake(panel, setData=False, **data):
         gridInfo = panel.grid_info()
         y = gridInfo['row']
         x = gridInfo['column']
-        under = []
-        under.append(objects[y][x][0])
-        under.append(objects[y][x][1])
-        under.append(objects[y][x][2])
         objects[y][x][0] = "p"
         objects[y][x][1] = dir
-        objects[y][x][2] = under
+        objects[y][x][2] = ['','','']
 
 
 def glassSpriteFake(panel, setData=False, **data):
@@ -1624,6 +1635,15 @@ def boxSpawnerSpriteFake(panel, setData=False, **data):
 
     panel.delete('main')
 
+    if setData:
+        # Remove another spawner of this colour because only one can exist for each colour.
+        for y in range(10):
+            for x in range(10):
+                if objects[y][x][0] == 's' and objects[y][x][2] == colour:
+                    panels[y][x].delete('main')
+                    panels[y][x].delete('frame')
+                    objects[y][x] = ['','','']
+
     left = panelWidth/2-1
     right = panelWidth/2+1
     panel.create_rectangle(0, 0, panelWidth, panelHeight,
@@ -1749,6 +1769,13 @@ def setPanelFake(panel, type, setData=False, **data):
         # Delete the frame (main is already deleted)
     else:
         fakeObjectSprites[type](panel,setData,**data)
+    # gridInfo = panel.grid_info()
+    # y = gridInfo['row']
+    # x = gridInfo['column']
+    # try:
+    #     print(objects[y][x])
+    # except IndexError:
+    #     pass
 
 fakeObjectSprites = {
     'w': lambda panel, dir='', flipped='', noborder='', colour='': setPanelFake(panel, 'w'),

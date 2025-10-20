@@ -3,7 +3,10 @@ import tkinter
 from tkinter import *
 from laser import *
 from core import *
-import random
+import sys
+import os
+import ast
+
 
 
 # colour is not used but is passed when the reciever is activated so must be declared
@@ -262,7 +265,7 @@ def level6():
     #     **emitterActivators,
     #     red = levelEnd
     # )
-
+levels.append(level6)
 
 def level7():
     # Fill all panels in the bottom half with floors and leave empty gaps only where lasers go to make the level less confusing and intimidating.
@@ -316,10 +319,10 @@ def level7():
 
     selectInit((0, 9), movables)
 
-    def yellow(reverse, colour):
-        doorOpen(reverse, colour)
-        emitterActivate(reverse, colour)
-
+    # def yellow(reverse, colour):
+    #     doorOpen(reverse, colour)
+    #     emitterActivate(reverse, colour)
+levels.append(level7)
     # laserEvent(
     #     blue = boxSpawnerActivate,
     #     green = boxSpawnerActivate,
@@ -343,12 +346,16 @@ def level8():
 
 
 def levelEditor():
+    global editorLevelTemp
+    if editorLevelTemp:
+        # If a temporary level exists
+        createLevel(editorLevelTemp)
+
     for y in range(10):
         for x in range(10):
             # Create a border around each panel to highlight the grid objects can be created in.
             panels[y][x].create_rectangle(
                 0, 0, panelWidth-1, panelHeight-1, outline='white', width=1, tags='highlight')
-
 
     text = Label(root, text='Level Editor', fg='white',
                  bg='black', font=('Arial', 20, 'bold'))
@@ -541,9 +548,265 @@ def levelEditor():
             panels[y][x].bind("<Leave>",lambda event, panel=panels[y][x]: panel.itemconfig('highlight', outline="white", width=1)) # Reset the colour.
             panels[y][x].bind("<Button-1>", lambda event, panel=panels[y][x]: build(panel))
     
+    def saveLevel():
+        savePopupFrame = Frame(root, bg='black', borderwidth=5)
+        saveTitle = Label(savePopupFrame, text='Name Level', bg='black', fg='white', font=("Trebuchet MS", 16, "bold"))
+        saveSubtitle = Label(savePopupFrame, text='It will be saved in the \"Python/customLevels/\" folder', bg='black', fg='white', font=("Trebuchet MS", 13))
+        saveTitle.grid(row=0,column=0,sticky='ew')
+        saveSubtitle.grid(row=1,column=0,sticky=EW)
+        saveName = Entry(savePopupFrame, width=30, font=("Arial", 14))
+        saveName.grid(row=2,column=0)
+        saveButton = Button(savePopupFrame, text='Save')
+
+    play = 0
+    save = 0
+    load = 0
+    exit = 0
+    # Create the button variables so they can be cleared
+
+    buttonFrame = Frame(root, bg='black', borderwidth=0)
+    buttonFrame.grid(row=9,column=10,columnspan=3)
+
+    def clearEditor():
+        colourPanels = []
+        for i in colourButtons.values():
+            colourPanels.append(i[0])
+        # Colour buttons is a list inside a dictionary so this has to be reversed to get the panels.
+        editorObjects = []
+        editorObjects.append(text)
+        editorObjects.append(subtext)
+        editorObjects.append(rotate)
+        editorObjects.append(delete)
+        editorObjects.append(rect)
+        editorObjects.append(colourFrame)
+        editorObjects.extend(selectableObjects)
+        editorObjects.extend(colourPanels) 
+        editorObjects.extend([play,save,load,exit])
+        editorObjects.append(buttonFrame)
+        # Create a list of every object of the level editor outside the normal grid
+
+        for i in editorObjects:
+            i.destroy()
+            # Clear all of them
+
+        editorLevelTemp = objects
+        # Store the current level in a temporary variable so it can be restored when level is exited
+        createLevel(objects)
+
+    play = Button(buttonFrame,text='Play',command=clearEditor)
+    save = Button(buttonFrame,text='Save')
+    load = Button(buttonFrame,text='Load')
+    exit = Button(buttonFrame,text='Exit')
+
+    play.grid(row=0,column=0,sticky='nsew')
+    save.grid(row=0,column=1,sticky='nsew')
+    load.grid(row=1,column=1,sticky='nsew')
+    exit.grid(row=1,column=0,sticky='nsew')
+
+    #TODO: Add saving system
+
+def createLevel(objectsData, initialSelect):
+    """Build a level from object list. Used in level editor and when loading from a saved file."""
+    nextLevel(load=-2)
+    global objectData
+    objectData = {}
+    root.update_idletasks
+    movables = []
+    for y in range(10):
+        for x in range(10):
+            type = objectsData[y][x][0]
+            data1 = objectsData[y][x][1]
+            data2 = objectsData[y][x][2]
+            objects[y][x] = ['','','']
+            # Make sure the objects list is empty so that there isn't issues with movables storing themselves below them.
+            # (Done after storing the data just in case)
+            panels[y][x].delete('main')
+            panels[y][x].delete('frame')
+            if type != '': # If the panel shouldn't be empty.
+                if type != 'd':
+                    setPanel(y, x, type, colour=data2, dir=data1,
+                    flipped=data1, reverse=data1)
+                else:
+                    setPanel(y,x,type,colour=data1,reverse=data2)
+                if type in movableObjects or type == 's':
+                    movables.append(panels[y][x])
+                    # If the object is movable (or a spawner)
+                # Most things that are required are stored in data 1, while colour is always stored in data2. (except doors and I cant be bothered changing everything)
+    selectInit(initialSelect, movables)
+
+def levelSelector():
+    try:
+        exit.destroy()
+        levelInfo.destroy()
+    except AttributeError:
+        pass
+    for y in range(10):
+        for x in range(10):
+            panels[y][x].delete('all')
+            panels[y][x].grid_forget()
+            objects[y][x] = ['','','']
+            # Hide all panels (This screen doesn't use them)
+
+    # Scrollable window logic and objects
+    # Modified code from https://stackoverflow.com/a/71682458 (CC BY-SA 4.0)
+
+    # Create an outer frame
+    outerFrame = Frame(root, bg='black', borderwidth=0)
+    outerFrame.grid(column=0, row=0)
+    # Create a canvas in the frame
+    innerCanvas = Canvas(outerFrame, bg='black', highlightthickness=0)
+    # Create a scroll bar
+    scrollbar = Scrollbar(outerFrame, orient=VERTICAL, command=innerCanvas.yview)
+    scrollbar.pack(side=RIGHT, fill=Y)
+    innerCanvas.pack(side=LEFT, fill=BOTH, expand=True)
+    # Set the canvas to scroll with the scrollbar
+    innerCanvas.configure(yscrollcommand = scrollbar.set)
+    innerCanvas.bind(
+        '<Configure>', lambda e: innerCanvas.configure(scrollregion=innerCanvas.bbox("all"))
+    )
+    # Create a frame inside the canvas that everything is stored in
+    frame = Frame(innerCanvas, bg='black', borderwidth=0)
+    innerCanvas.create_window((0, 0), window=frame, anchor="nw")
+
+    # Actual text and buttons
+    title = Label(frame,text="Level Selector", fg='white', bg='black', font=('Trebuchet MS',16,'bold'))
+    subtitle = Label(frame, text="Pick a level below to play it.", fg='white', bg='black', font=('Trebuchet MS',12))
+
+    title.grid(row=0,column=0,pady=(10,0), sticky='W')
+    subtitle.grid(row=1,column=0,pady=(0,10), sticky='W')
+
+    # colourKeys = Frame(root, bg='black', borderwidth=0)
+    # defaultKey = Label(colourKeys, text='Default Levels', bg='black', fg="#2ADF2D", font=('Arial',10,'bold'))
+    # customKey = Label(colourKeys, text='Custom Levels', bg='black', fg="#2A88DF", font=('Arial',10,'bold'))
+    # defaultKey.grid(row=0,column=0, sticky='W')
+    # customKey.grid(row=1,column=0, sticky='W')
+    # colourKeys.grid(row=2,column=0, sticky='W')
+
+    def loadLevel(level, custom):
+        outerFrame.destroy()
+        # Destroy the outer frame, all other objects of this screen are decendants of it so they are destroyed too.
+        for y in range(10):
+            for x in range(10):
+                # Re-draw all the panels
+                panels[y][x].grid(column=x, row=y)
+        global exit
+        exit = Button(root, text='Return', command=levelSelector)
+        if not custom:
+            exit.grid(row=10,column=0,columnspan=10,pady=10)
+            nextLevel(load=level)
+        else:
+            file = open(f"customLevels/{customLevels[level]}")
+            objectDataStr = file.readlines() # Read and store level data from level file
+            file.close()
+            objectDataStr.pop(0)
+            initialSelect = objectDataStr.pop(10)
+            initialSelect = initialSelect.rstrip()
+            initialSelect = initialSelect.split(" ")
+            for i in range(len(initialSelect)):
+                initialSelect[i] = int(initialSelect[i])
+            # Remove the first and last lines (not object data)
+            # Store the last line (object that should start selected)
+            # Remove new line indicator, put it in a list, and change strings to integers.
+
+            # for i in objectData:
+            #     print(i)
+            # for i in range(len(objectData)):
+            #     objectData[i] = objectData[i].rstrip() # Remove new line characters
+            #     objectData[i] = objectData[i].replace(' ','') # Remove spaces
+            #     objectData[i] = objectData[i][1:-1] # Remove starting and ending square brackets
+            #     dataList = objectData[i].split('],') # Split it into a list based on commas after closing brackets (to not split by data items)
+            #     for j in range(len(dataList)):
+            #         if dataList[j][-1] != ']':
+            #             # Add the closing bracket back (this is removed above).
+            #             # The last item of each line won't have it removed because it doesn't end in "]," (it ends in "]")
+            #             dataList[j] = dataList[j] + "]"
+            #         object = dataList[j].split(',')
+            #         dataList[j] = object
+            # ^^ This was removed because I found a better way to convert to list, but kept incase needed ^^
+            objectData = []
+            for i in range(len(objectDataStr)):
+                objectDataStr[i] = objectDataStr[i].rstrip() # Remove new line characters
+                objectData.append(ast.literal_eval(objectDataStr[i])) # Uses an ast library function to get a list from a string formatted as a list.
+            global levelInfo
+            levelInfo = Label(root, text=f"Custom Level \"{level}\"", bg='black', fg='white', font=('Arial', 12, 'bold'))
+            levelInfo.grid(row=10, column=0, columnspan=10, pady=(10,0), sticky='ew')
+            exit.grid(row=11, column=0, columnspan=10, pady=(0,10))
+            createLevel(objectData, initialSelect)
+            
+
+    defaultText = Label(frame, text='Default Levels', bg='black', fg="#FFFFFF", font=('Arial',10,'bold'))
+    defaultText.grid(row=3,column=0,sticky=W,pady=(0,5))
+    for i in range(len(levels)):
+        text = Label(frame,text=f"          • Level {i}", bg='black', fg='#2ADF2D', font=('Arial', 12, 'bold'))
+        text.grid(row=i+4,column=0,pady=5,sticky=W)
+        # Add underline when hovered over.
+        text.bind("<Enter>", lambda event, object=text: object.config(font = ('Arial', 12, 'bold', 'underline')))
+        # Remove underline when mouse leaves.
+        text.bind("<Leave>", lambda event, object=text: object.config(font = ('Arial', 12, 'bold')))
+        # Load level when clicked
+        text.bind("<Button-1>", lambda event, level=i: loadLevel(level, False))
+
+    # Checks for files in the customLevels folder
+    files = os.listdir('customLevels/')
+    customLevels = {}
+    notLevels = []
+    for i in files:
+        # Remove items that aren't levels
+        if i[-4:] != ".txt":
+            # If the file does not end in .txt
+            notLevels.append(i) 
+            # Store it in a list to delete later (removing items from a list currently being iterated causes problems)
+            continue
+            # Don't try to open it (it might be a directory or something that can't be opened)
+        file = open(f"customLevels/{i}")
+        firstLine = file.readline()
+        firstLine = firstLine.rstrip()
+        # Read the first line
+        if firstLine[:6] != "name =":
+            # If the file does not start with the level's name
+            notLevels.append(i) 
+            # Store it in a list to delete later (removing items from a list currently being iterated causes problems)
+            continue
+        customLevels[firstLine[7:]] = i # Store the level name (the text after 'name = ' on the first line) and file in a dictionary
+        file.close()
+    
+    for i in notLevels:
+        files.remove(i)
+        # Remove everything that isn't a level from the files list
+    
+    
+    if len(customLevels) > 0:
+        columnoffset = len(levels) + 4
+        customText = Label(frame, text='Custom Levels', bg='black', fg="#FFFFFF", font=('Arial',10,'bold'))
+        customText.grid(row=columnoffset,column=0,sticky=W,pady=(10,5))
+        for i, n in zip(customLevels, range(len(customLevels))):
+            text = Label(frame,text=f"          • {i}", bg='black', fg='#2A88DF', font=('Arial', 12, 'bold'))
+            text.grid(row=n+columnoffset+1,column=0,pady=5,sticky=W)
+            # Add underline when hovered over.
+            text.bind("<Enter>", lambda event, object=text: object.config(font = ('Arial', 12, 'bold', 'underline')))
+            # Remove underline when mouse leaves.
+            text.bind("<Leave>", lambda event, object=text: object.config(font = ('Arial', 12, 'bold')))
+            # Load level when clicked
+            text.bind("<Button-1>", lambda event, level=i: loadLevel(level, True))
+        
     
 
-levelEditor()
+    
+    
+# editorStr = sys.argv[1] # Argument passed to this script from menu.py
+# editor = bool(editorStr)
+# if editor:
+#     levelEditor()
+# else:
+#     with open('data.txt') as f:
+#         level = int(f.readline())
+#         # Read the first line of the file and convert it to int.
+#     levels[level]()
+
+levelSelector()
+# for i in objects:
+#     print(i)
+        
 
 
 root.mainloop()  # Ensure all functions are defined before this is run.
