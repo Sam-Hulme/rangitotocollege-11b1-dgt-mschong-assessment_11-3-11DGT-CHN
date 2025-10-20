@@ -42,6 +42,7 @@ def leveltemplate(event=''):
     for y in panels:
         for x in y:
             x.delete('debug')
+            root.update_idletasks()
             row = x.grid_info()["row"]
             column = x.grid_info()["column"]
             x.create_rectangle(0, 0, panelWidth, panelHeight,
@@ -51,7 +52,7 @@ def leveltemplate(event=''):
     root.after(1000, leveltemplate)
 
 
-root.bind("<space>", leveltemplate)
+root.bind("<F1>", leveltemplate)
 
 
 # https://stackoverflow.com/a/17985217 Modified code from user mgold on stackoverflow. Licenced under CC BY-SA 4.0

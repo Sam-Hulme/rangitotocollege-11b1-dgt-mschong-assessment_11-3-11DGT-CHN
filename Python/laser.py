@@ -1190,15 +1190,17 @@ def objectSelect(event, object=0):
     selectIndicator()
 
 
-def selectIndicator(panel=False):
-    if panel == False:
+def selectIndicator(panel=False, selected=[], ignoreSpawners = True):
+    if selected == []:
         global selectedObject
-        x = selectedObject[1]
-        y = selectedObject[0]
-        global panelWidth
-        global panelHeight
+        selected = selectedObject
+    if panel == False:
+        x = selected[1]
+        y = selected[0]
+        panelWidth = panels[y][x].winfo_width()
+        panelHeight = panels[y][x].winfo_height()
         panel = panels[y][x]
-        if objects[y][x][0] == 's':
+        if objects[y][x][0] == 's' and ignoreSpawners:
             # Dont draw the indicator for box spawners (these cant be moved and are selected at the start to select the box they spawn)
             return
     else:
@@ -1449,6 +1451,15 @@ def emitterSpriteFake(panel, setData=False, **data):
     panelHeight = panel.winfo_height()
     panel.delete('main')
 
+    if setData:
+        # Remove another emitter of this colour because only one can exist for each colour.
+        for y in range(10):
+            for x in range(10):
+                if objects[y][x][0] == 'e' and objects[y][x][2] == colour:
+                    panels[y][x].delete('main')
+                    panels[y][x].delete('frame')
+                    objects[y][x] = ['','','']
+
     w = panelWidth
     h = panelHeight
     if active:
@@ -1634,15 +1645,6 @@ def boxSpawnerSpriteFake(panel, setData=False, **data):
     panelHeight = panel.winfo_height()
 
     panel.delete('main')
-
-    if setData:
-        # Remove another spawner of this colour because only one can exist for each colour.
-        for y in range(10):
-            for x in range(10):
-                if objects[y][x][0] == 's' and objects[y][x][2] == colour:
-                    panels[y][x].delete('main')
-                    panels[y][x].delete('frame')
-                    objects[y][x] = ['','','']
 
     left = panelWidth/2-1
     right = panelWidth/2+1
