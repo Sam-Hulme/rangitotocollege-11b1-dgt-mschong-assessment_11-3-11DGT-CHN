@@ -1,6 +1,7 @@
 """All the functions and variables for the laser game."""
 from tkinter import *
 from core import *
+import core
 
 root.title("Laser")
 
@@ -50,7 +51,8 @@ movableObjects = ['m', 'p', 'b']
 
 levels = []
 level = 0
-
+# Sets what to do when the level ends (next level or return to level selector)
+endEvent = 0
 boxSpawners = {}
 laserFloors = []
 selectedObject = []
@@ -72,7 +74,14 @@ editorLevelTemp = False
 #         for i in a:
 #             i.destroy() #Destroy existing panels (if the function is run multiple times)
 init(columns=10, rows=10, width=64, height=64)
-from core import panelWidth, panelHeight
+panelWidth = core.panelWidth
+panelHeight = core.panelHeight 
+# Update panel width and panel height
+
+
+def getLevelEnd(function):
+    global levelEnd
+    levelEnd = function
 
 
 def nextLevel(load=-1):  # Reset everything and start the next level
@@ -99,7 +108,7 @@ def nextLevel(load=-1):  # Reset everything and start the next level
     for y in range(10):
         for x in range(10):
             panels[y][x].delete("all")  # Clear all panels in the level
-            if not load == -1:
+            if not load == -2:
                 objects[y][x] = ['', '', '']  # Reset object array
             panels[y][x].unbind("<Button-1>")
     root.unbind_all("<Key>")
@@ -122,8 +131,11 @@ def nextLevel(load=-1):  # Reset everything and start the next level
             data = f.readlines()
             # Store the file in a list
         with open("data.txt", "w") as f:
-            data[0] = str(level) # Replace the first line with the level
-            f.writelines(data) # Set the file to the list
+            data[0] = str(level)  # Replace the first line with the level
+            for i in range(len(data)-1):
+                data[i] = data[i] + "\n"
+                # Add line breaks to the end of every line except the last one because readlines() doesn't include them.
+            f.writelines(data)  # Set the file to the list
         levels[level]()
     elif load >= 0:
         levels[load]()
@@ -134,7 +146,8 @@ def freeze():  # Unbind everything to freeze the level
     root.unbind_all("<Key>")
     frozen = True
 
-def setPanel(y, x, type, **data):  # set a single panel to a solid colour object
+
+def setPanel(y, x, type, setData=False, **data):  # set a single panel to a solid colour object
     panels[y][x].delete("main")
     if type in objectColours:
         panels[y][x].create_rectangle(
@@ -476,7 +489,7 @@ def emitterSprite(y, x, **data):
     if dir == 0:  # Change location and angle variables based on direction of emitter
         coordsTip = w//2, h//3
         leftBase = w/(64/22), h
-        rightBase = w/(w/42), h
+        rightBase = w/(64/42), h
         arcCenter = w//2, h//6+h//20
         circleAngle = 270
         angleOffsetStart = 0
@@ -493,7 +506,7 @@ def emitterSprite(y, x, **data):
         # Needs to be rounded up ('//' divides and floors)
         coordsTip = w//2, round(h/1.5)
         leftBase = w/(64/22), 0
-        rightBase = w/(w/42), 0
+        rightBase = w/(64/42), 0
         arcCenter = w//2, h//1.2-h//20
         circleAngle = 90
         angleOffsetStart = 2
@@ -704,7 +717,7 @@ def boxSprite(y, x, **data):
                                  panelHeight/1.8, width=6, fill='#884F0E', tags='main')
         panels[y][x].create_line(panelWidth/10, panelHeight/3, panelWidth /
                                  1.8, panelHeight/2.2, width=6, fill='#BA7B32', tags='main')
-    panels[y][x].create_text(panelWidth/2, panelHeight/2, text=spawner)
+    # panels[y][x].create_text(panelWidth/2, panelHeight/2, text=spawner)
     objects[y][x][2] = under
     if stage == 0:
         objects[y][x][0] = 'b'
@@ -823,6 +836,7 @@ def boxSpawnerSprite(y, x, **data):
             # Set border colour to darker colour if inactive
             borderColour = frameColours[colour]
     except KeyError:
+        # TODO: Set a border colour that doesn't look like existing colours
         borderColour = 'yellow'
     # print(colour,borderColour)
     panels[y][x].create_rectangle(
@@ -1051,15 +1065,24 @@ def laserUpdate():
         for x in range(10):
             # Also update box button functions
             if objects[y][x][0] == 'n' or objects[y][x][0] == 'b':
-                type = objects[y][x][0]
-                # If a button is found (meaning there is no box on top)
-                if type == 'n':
-                    colours[objects[y][x][2]] = False
-                    activateColour(reverse=True, colour=objects[y][x][2])
-                # If a box is found with a button underneath
-                elif type == 'b' and objects[y][x][2][0] == 'n':
-                    colour = objects[y][x][2][2]
-                    activateColour(reverse=False, colour=colour)
+                try:
+                    type = objects[y][x][0]
+                    # If a button is found (meaning there is no box on top)
+                    if type == 'n':
+                        if colours[objects[y][x][2]]:
+                            # Only deactivate if the colour is active
+                            colours[objects[y][x][2]] = False
+                            activateColour(
+                                reverse=True, colour=objects[y][x][2])
+                    # If a box is found with a button underneath
+                    elif type == 'b' and objects[y][x][2][0] == 'n':
+                        colour = objects[y][x][2][2]
+                        if not colours[colour]:
+                            # Only activate if the colour hasn't already been activated (prevents it running twice)
+                            colours[colour] = True
+                            activateColour(reverse=False, colour=colour)
+                except KeyError:
+                    pass
 
 
 def objectMove(event, object):
@@ -1190,7 +1213,7 @@ def objectSelect(event, object=0):
     selectIndicator()
 
 
-def selectIndicator(panel=False, selected=[], ignoreSpawners = True):
+def selectIndicator(panel=False, selected=[], ignoreSpawners=True):
     if selected == []:
         global selectedObject
         selected = selectedObject
@@ -1292,13 +1315,26 @@ def emitterActivate(reverse, colour):
     except KeyError:
         return
 
+# colour is not used but is passed when the reciever is activated so must be declared
+
+
+def levelEnd(inactive=False, colour=False):
+    '''Runs when the level is completed.'''
+    global endEvent
+    if inactive:
+        return  # If the emitter is not active, dont run
+    freeze()
+    # Run the function set to run when the level ends
+    root.after(2000, endEvent)
+
 
 def activateColour(reverse, colour):
     '''Run all the colour activation functions for this colour, which will do nothing if not applicable.'''
+    if colour == 'red':
+        levelEnd(reverse)
     doorOpen(reverse, colour)
     boxSpawnerActivate(reverse, colour)
     emitterActivate(reverse, colour)
-
 
 
 # Fake versions of all the objects that are non-functional sprites with no actual code.
@@ -1323,7 +1359,7 @@ def mirrorSpriteFake(panel, setData=False, **data):
         endX = temp
     panel.create_line(startX, panelHeight/4.5, endX, panelHeight -
                       panelHeight/4.5, fill="#62f960", width=5, tags="main")
-    
+
     if setData:
         # Set data of the object in the objects list.
         gridInfo = panel.grid_info()
@@ -1331,7 +1367,7 @@ def mirrorSpriteFake(panel, setData=False, **data):
         x = gridInfo['column']
         objects[y][x][0] = "m"
         objects[y][x][1] = flipped
-        objects[y][x][2] = ['','','']
+        objects[y][x][2] = ['', '', '']
 
 
 def prismSpriteFake(panel, setData=False, **data):
@@ -1389,7 +1425,7 @@ def prismSpriteFake(panel, setData=False, **data):
         x = gridInfo['column']
         objects[y][x][0] = "p"
         objects[y][x][1] = dir
-        objects[y][x][2] = ['','','']
+        objects[y][x][2] = ['', '', '']
 
 
 def glassSpriteFake(panel, setData=False, **data):
@@ -1413,7 +1449,7 @@ def glassSpriteFake(panel, setData=False, **data):
     panel.create_line(w*2, h, w, h*2, width=4, fill='#EEEEEE', tags='main')
     panel.create_line(panelWidth-w*2, panelHeight-h, panelWidth-w,
                       panelHeight-w*2, width=4, fill='#EEEEEE', tags='main')
-    
+
     if setData:
         # Set data of the object in the objects list.
         gridInfo = panel.grid_info()
@@ -1458,7 +1494,7 @@ def emitterSpriteFake(panel, setData=False, **data):
                 if objects[y][x][0] == 'e' and objects[y][x][2] == colour:
                     panels[y][x].delete('main')
                     panels[y][x].delete('frame')
-                    objects[y][x] = ['','','']
+                    objects[y][x] = ['', '', '']
 
     w = panelWidth
     h = panelHeight
@@ -1471,7 +1507,7 @@ def emitterSpriteFake(panel, setData=False, **data):
     if dir == 0:  # Change location and angle variables based on direction of emitter
         coordsTip = w//2, h//3
         leftBase = w/(64/22), h
-        rightBase = w/(w/42), h
+        rightBase = w/(64/42), h
         arcCenter = w//2, h//6+h//20
         circleAngle = 270
         angleOffsetStart = 0
@@ -1488,7 +1524,7 @@ def emitterSpriteFake(panel, setData=False, **data):
         # Needs to be rounded up ('//' divides and floors)
         coordsTip = w//2, round(h/1.5)
         leftBase = w/(64/22), 0
-        rightBase = w/(w/42), 0
+        rightBase = w/(64/42), 0
         arcCenter = w//2, h//1.2-h//20
         circleAngle = 90
         angleOffsetStart = 2
@@ -1516,7 +1552,7 @@ def emitterSpriteFake(panel, setData=False, **data):
                             width=3, start=circleAngle-14-angleOffsetStart, end=circleAngle+14+angleOffsetEnd, tags='main')
     panel.create_circle_arc(*arcCenter, w//2+w//20, rY=h//2+h//20, style='arc', outline=ringColour, fill='',
                             width=3, start=circleAngle-15-angleOffsetStart, end=circleAngle+15+angleOffsetEnd, tags='main')
-    
+
     if setData:
         # Set data of the object in the objects list.
         gridInfo = panel.grid_info()
@@ -1698,7 +1734,7 @@ def boxSpawnerSpriteFake(panel, setData=False, **data):
                 lineX -= 1
             panel.create_rectangle(
                 lineX, lineY, lineX+xOffset, lineY+yOffset, fill='black', tags='main')
-            
+
     if setData:
         # Set data of the object in the objects list.
         gridInfo = panel.grid_info()
@@ -1733,7 +1769,7 @@ def boxButtonSpriteFake(panel, setData=False, **data):
     panel.create_rectangle(0, 0, panelWidth, panelHeight,
                            fill="#5e3c3c", outline="#525252", width=32, tags='main')
     panel.tag_raise('frame')
-    
+
     if setData:
         # Set data of the object in the objects list.
         gridInfo = panel.grid_info()
@@ -1767,10 +1803,10 @@ def setPanelFake(panel, type, setData=False, **data):
         gridInfo = panel.grid_info()
         y = gridInfo['row']
         x = gridInfo['column']
-        objects[y][x] = ['','','']
+        objects[y][x] = ['', '', '']
         # Delete the frame (main is already deleted)
     else:
-        fakeObjectSprites[type](panel,setData,**data)
+        fakeObjectSprites[type](panel, setData, **data)
     # gridInfo = panel.grid_info()
     # y = gridInfo['row']
     # x = gridInfo['column']
@@ -1778,6 +1814,7 @@ def setPanelFake(panel, type, setData=False, **data):
     #     print(objects[y][x])
     # except IndexError:
     #     pass
+
 
 fakeObjectSprites = {
     'w': lambda panel, dir='', flipped='', noborder='', colour='': setPanelFake(panel, 'w'),
