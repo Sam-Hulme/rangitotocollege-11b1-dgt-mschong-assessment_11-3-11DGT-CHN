@@ -231,8 +231,8 @@ def reset():
             objects[row][column] = [0, False]
     for i in extras:
         i.destroy()
-    numberSprite(random.randint(0, 3), random.randint(0, 3), 1)
     numberSprite(random.randint(0, 3), random.randint(0, 3), 2)
+    numberSprite(random.randint(0, 3), random.randint(0, 3), 1)
     root.bind('<Key>', move)
 
     global highestNumber

@@ -7,12 +7,13 @@ from core import *
 import sys
 import os
 import ast
+import copy
 
 
 def selectInit(selectedObject, movables):
     '''Automatically select a box and bind movement keys and mouse clicking to boxes'''
     objectSelect(0, movables[0])
-
+    laser.selectedObject = selectedObject
     root.bind("<Key>", lambda event: objectMove(event, selectedObject))
     for i in movables:
         i.bind("<Button-1>", objectSelect)
@@ -345,9 +346,28 @@ def levelEditor():
         pass
     global editorLevelTemp
     global selectedObjectTemp
+    global selectedObject
+    def selectIndicatorFlash(panel, draw):
+        """Flash the selection indicator on and off for the selected panel."""
+        global selectedObject
+        if selectedObject == []:
+            return
+        panel = panels[selectedObject[0]][selectedObject[1]]
+        if draw:
+            selectIndicator(False, selectedObject, ignoreSpawners=False)
+            panel.tag_raise('selected')
+        else:
+            panel.delete('selected')
+
+        panel.after(800, lambda: selectIndicatorFlash(panel, not draw)) 
+        # Run the function again after 800ms with draw inverted.
+
     if editorLevelTemp:
         # If a temporary level exists
         createLevel(editorLevelTemp, selectedObjectTemp, fake=True)
+        selectedObject = selectedObjectTemp
+        if selectedObject != []:
+            selectIndicatorFlash(panels[selectedObject[0]][selectedObject[1]], True)            
     laser.endEvent = levelEditor
     for y in range(10):
         for x in range(10):
@@ -522,20 +542,6 @@ def levelEditor():
             colour = "#60e8f7"
         
         panel.itemconfig('highlight', outline=colour, width=3)
-        
-    def selectIndicatorFlash(panel, draw):
-        global selectedObject
-        if selectedObject == []:
-            return
-        panel = panels[selectedObject[0]][selectedObject[1]]
-        if draw:
-            selectIndicator(False, selectedObject, ignoreSpawners=False)
-            panel.tag_raise('selected')
-        else:
-            panel.delete('selected')
-
-        panel.after(800, lambda: selectIndicatorFlash(panel, not draw)) 
-        # Run the function again after 800ms with draw inverted.
     
 
     def build(panel):
@@ -723,10 +729,10 @@ def levelEditor():
 
         if loadLevel:
             global editorLevelTemp
-            editorLevelTemp = objects
+            editorLevelTemp = copy.deepcopy(objects) # deepcopy makes a copy including nested lists
             global selectedObjectTemp
             global selectedObject
-            selectedObjectTemp = selectedObject
+            selectedObjectTemp = selectedObject.copy()
             # Store the current level in a temporary variable so it can be restored when level is exited
             if selectedObject == []:
                 selectedObject = -1 # -1 is used in the level files for selectedObject, meaning no movables in level so don't run selectInit()
@@ -756,13 +762,9 @@ def createLevel(objectsData, initialSelect, fake=False):
     objectData = {}
     global selectedObject
     selectedObject = []
+    laser.selectedObject = []
     root.update_idletasks()
     movables = []
-    if fake:
-        setPanelFunc = setPanelFake
-        # Use the fake version of the sprites if fake mode is enabled (used when restoring editor level).
-    else:
-        setPanelFunc = setPanel
     # print(objectsData)
     for y in range(10):
         for x in range(10):
@@ -776,19 +778,34 @@ def createLevel(objectsData, initialSelect, fake=False):
             panels[y][x].delete('frame')
             if type != '': # If the panel shouldn't be empty.
                 if type != 'd':
-                    setPanelFunc(y, x, type, setData=True, colour=data2, dir=data1,
-                    flipped=data1, reverse=data1)
+                    if fake:
+                        setPanelFake(panels[y][x], type, setData=True, colour=data2, dir=data1,
+                        flipped=data1, reverse=data1)
+                        # Use the fake version of the sprites if fake mode is enabled (used when restoring editor level).
+                    else:
+                        setPanel(y, x, type, colour=data2, dir=data1,
+                        flipped=data1, reverse=data1)
                 else:
-                    setPanelFunc(y,x,type,setData=True,colour=data1,reverse=data2)
+                    if fake:
+                        setPanelFake(panels[y][x],type,setData=True,colour=data1,reverse=data2)
+                    else:
+                        setPanel(y,x,type,colour=data1,reverse=data2)
                 if type in movableObjects or type == 's':
                     movables.append(panels[y][x])
                     # If the object is movable (or a spawner)
                 # Most things that are required are stored in data 1, while colour is always stored in data2. (except doors and I cant be bothered changing everything)
 
-    
-    if initialSelect != -1 or initialSelect != []:
+    if (initialSelect != -1 or initialSelect != []) and not fake and movables != []:
         # initialSelect will be -1 if no movables are in the level.
+        y = initialSelect[0]
+        x = initialSelect[1]
+        movables.remove(panels[y][x])
+        movables.insert(0, panels[y][x])
+        # Insert the object that starts selected at the start of the list so it starts selected.
         selectInit(initialSelect, movables)
+
+# TODO: Make a unique colour for ending the level, replacing the default colour for objects that activate colours in the level editor.
+# This will make it less confusing and also make red actually do something for objects activated by colours
 
 def levelSelector():
     global exitButton

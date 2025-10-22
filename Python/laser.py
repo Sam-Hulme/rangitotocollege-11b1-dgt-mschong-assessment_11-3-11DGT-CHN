@@ -111,7 +111,7 @@ def nextLevel(load=-1):  # Reset everything and start the next level
             if not load == -2:
                 objects[y][x] = ['', '', '']  # Reset object array
             panels[y][x].unbind("<Button-1>")
-    root.unbind_all("<Key>")
+    root.unbind("<Key>")
     laserFloors = []  # Reset all variables
     laserData = [[0, 0, 0, False], [0, 0, 0, False]]
     selectedObject = []
@@ -147,7 +147,7 @@ def freeze():  # Unbind everything to freeze the level
     frozen = True
 
 
-def setPanel(y, x, type, setData=False, **data):  # set a single panel to a solid colour object
+def setPanel(y, x, type, **data):  # set a single panel to a solid colour object
     panels[y][x].delete("main")
     if type in objectColours:
         panels[y][x].create_rectangle(
@@ -398,6 +398,7 @@ def laserSprite(x, y, **data):
                              width=rot/(64/13), fill="#d10202", tags="main")
     if glass:
         glassSprite(y, x, laser=True)
+
 
 
 def emitterSprite(y, x, **data):
@@ -1203,7 +1204,6 @@ def objectSelect(event, object=0):
     y = objectInfo['row']
     x = objectInfo['column']
     if (len(selectedObject) == 0):
-        # TODO: Make it set objectSelect to the objects position, not the panel itself.
         selectedObject = [y, x]
     else:
         old = panels[selectedObject[0]][selectedObject[1]]
