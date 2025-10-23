@@ -18,15 +18,17 @@ laserColours = {
     'blue': "#203AFF",
     'yellow': "#F2EB1E",
     'purple': "#C41EF2",
-    'orange': "#F87219"
-}
+    'orange': "#F87219",
+    'end': "#e2acb4"
+} # End is the colour that ends the level
 frameColours = {  # Darker colours for frames which look less out of place on doors.
     'red': "#971f1f",
     'green': "#259509",
     'blue': "#142394",
     'yellow': "#B39B16",
     'purple': "#821A9F",
-    'orange': "#B65218"
+    'orange': "#B65218",
+    'end': "#b2959a"
 }
 movableBlocks = ['m', 'w', 'e', 'r', 'd', 'p',
                  'g', 'b']  # Objects that block box movement
@@ -68,6 +70,7 @@ frozen = False
 global selectLoop  # The event for the selected rectangle moving animation
 selectLoopFrames = 0
 editorLevelTemp = False
+runEndEvent = ''
 # def init(): #Run once to initialise an empty level, returns a 2d array with all the canvas objects. Running again will reset the level.
 #     objects = [[]]
 #     for a in panels:
@@ -132,6 +135,10 @@ def nextLevel(load=-1):  # Reset everything and start the next level
             # Store the file in a list
         with open("data.txt", "w") as f:
             data[0] = str(level)  # Replace the first line with the level
+            if level == 8:
+                # If the levels have been completed and level 8 (editor) is being loaded
+                data[1] = "True" 
+                # Set the second line to true (adds the level editor button to the menu)
             for i in range(len(data)-1):
                 data[i] = data[i] + "\n"
                 # Add line breaks to the end of every line except the last one because readlines() doesn't include them.
@@ -143,7 +150,7 @@ def nextLevel(load=-1):  # Reset everything and start the next level
 
 def freeze():  # Unbind everything to freeze the level
     global frozen
-    root.unbind_all("<Key>")
+    root.unbind("<Key>")
     frozen = True
 
 
@@ -351,22 +358,23 @@ def glassSprite(y, x, **data):
 def laserSprite(x, y, **data):
     '''
     data:
-    emitter (bool),
+    emitter (int),
     dir (int)
     '''
     dir = data['dir']
     try:
         emitter = data['emitter']
     except KeyError:
-        emitter = False
+        emitter = 0
     glass = False
     if objects[y][x][0] == 'g':
         glass = True
+    # Emitter is 1 for emitter and 2 for reciever
     if not emitter and not objects[y][x][0] == 'l':
         # Don't delete the emitter sprite or the sprite of other lasers (if laser goes over itself)
         panels[y][x].delete("main")
         objects[y][x][0] = "l"
-        objects[y][x][1] = ''
+        objects[y][x][1] = dir
         objects[y][x][2] = ''
     if (dir in [0, 2]):
         startX = panelWidth/2 - 0.5
@@ -374,11 +382,16 @@ def laserSprite(x, y, **data):
         endX = startX
         endY = panelHeight
         rot = panelWidth
-        if (emitter):
+        if emitter == 1:
             if dir == 0:
                 endY = panelHeight/3 - 1
             else:
                 startY = panelHeight/1.5 + 1
+        elif emitter == 2:
+            if dir == 2:
+                endY = panelHeight/1.4 + panelHeight/32
+            else:
+                startY = panelHeight/2.8 - panelWidth/32
 
     elif (dir in [1, 3]):
         startX = 0
@@ -386,11 +399,16 @@ def laserSprite(x, y, **data):
         endX = panelWidth
         endY = startY
         rot = panelHeight  # The dimension to use to determine the size of the laser
-        if (emitter):
+        if emitter == 1:
             if dir == 3:
                 endX = panelWidth/3 - 1
             else:
                 startX = panelWidth/1.5 + 1
+        elif emitter == 2:
+            if dir == 1:
+                endX = panelWidth/1.4 + panelWidth/32
+            else:
+                startX = panelWidth/2.8 - panelWidth/32
 
     panels[y][x].create_line(startX, startY, endX, endY,
                              width=rot//3, fill="#FF6A6A", tags="main")
@@ -538,7 +556,7 @@ def emitterSprite(y, x, **data):
                                    fill='', width=3, start=circleAngle-15-angleOffsetStart, end=circleAngle+15+angleOffsetEnd, tags='main')
     panels[y][x].unbind("<Button-1>")
     if (active == True):
-        laserSprite(x, y, dir=dir, emitter=True)
+        laserSprite(x, y, dir=dir, emitter=1)
     objects[y][x][0] = "e"
     objects[y][x][1] = dir
     objects[y][x][2] = colour
@@ -575,10 +593,32 @@ def recieverSprite(y, x, **data):
         outline = laserColours[colour]
     except KeyError:
         outline = "#FFFFFF"  # If the colour is not yet set in the dictionary, use a placeholder
+    w = panelWidth
+    h = panelHeight
+    if dir == 0:
+        x1 = 0
+        y1 = 0
+        x2 = w
+        y2 = h/2
+    elif dir == 1:
+        x1 = w
+        y1 = 0
+        x2 = w/2
+        y2 = h
+    elif dir == 2:
+        x1 = 0
+        y1 = h/2
+        x2 = w
+        y2 = h
+    elif dir == 3:
+        x1 = 0
+        y1 = 0
+        x2 = w/2
+        y2 = h
     oval = panels[y][x].create_oval(
-        0, panelHeight/2, panelWidth, panelHeight, outline=outline, fill="#3e3e3e", width=6, tags="main")
+        x1, y1, x2, y2, outline=outline, fill="#3e3e3e", width=6, tags="main")
     if (laser):
-        laserSprite(x, y, dir=dir, emitter=True)
+        laserSprite(x, y, dir=dir, emitter=2)
         panels[y][x].itemconfig(oval, fill="#f88080")
     objects[y][x][0] = 'r'
     objects[y][x][1] = dir
@@ -936,9 +976,15 @@ def boxButtonFrame(panel, colour):
             panel.create_rectangle(
                 lineX, lineY, lineX+xOffset, lineY+yOffset, fill='black', tags='frame')
 
-
+# def test(e):
+#     for y in range(10):
+#         for x in range(10):
+#             panels[y][x].delete('test')
+#             panels[y][x].create_text(32,32,text=objects[y][x][0],fill='white',tags='test')
+# root.bind("<p>", test)
 def laserUpdate():
     def laserMove(y, x, dir):
+        hitDoor = False
         while True:
             if (dir == 0):
                 y -= 1
@@ -961,6 +1007,10 @@ def laserUpdate():
                         # Save the glowing panel to a list so it can be iterated and reset when the laser is updated.
                         laserFloors.append([y, x])
                     # If laser collides with a wall, floor, or leaves the screen, stop running.
+                    # print(f"Laser hit a {objects[y][x][0]} at {y, x}")
+                    elif objects[y][x][0] == 'd':
+                        # If the laser hits a closed door, return that for later
+                        hitDoor = [y, x, False]
                     break
                 elif (objects[y][x][0] == "m"):
                     mirrorFlipped = objects[y][x][1]
@@ -989,79 +1039,149 @@ def laserUpdate():
                         if dir > 3:
                             dir = 0
                         oldDir = dir
-                        laserMove(y, x, dir)
-                        updateColours()
+                        laserMove(y, x, dir) 
+                        # print(f"Lasers Added from {y}, {x}, dir {dir}: {lasersRemoved}")
+                        # # Issue: When the first laser of a prism hits another prism, all hell breaks loose and colours of the first prism are visually deactivated but the laser still moves through the "closed" doors.
+                        # # It is most likely due to this, because it runs the temporary 'fake' first laser and hits the prism which causes the same thing to occur and run the remove and revert update functions.
+                        # # This was caused by the changes I made today of reversing the first laser. It is most likely an issue with either reversing the updated colours or removing the lasers, possibly due to lasersRemoved or updatedColours in the second prism using the variables of the first.
+                        updatedColours = updateColours()
+                        # clearLasers(lasersRemoved) # Only remove lasers created from this prism to not remove any others in the level.
+                        # for i in updatedColours:
+                        #     # Reverse the changes in the colour dictionary
+                        #     # This won't affect actual coloured objects, which won't be updated until the second laser is calculated.
+                        #     colours[i] = not updatedColours[i]
+                        # Lasers are cleared so that the first laser doesn't go through doors that the second one closes.
+                        # Colours are still updated so this is basically an invisible laser
+                        # print(f"Colour/Laser update 1. Current colours: {colours}. Doors: {doors}")
                         for i in range(2):
                             dir -= 1
                             if dir < 0:
                                 dir = 3
                         laserMove(y, x, dir)
                         updateColours()
+                        # print(f"Colour/Laser update 2. Current colours: {colours}. Doors: {doors}")
                         dir = oldDir
                         laserMove(y, x, dir)
+                        '''
+                        Colours are updated twice and lasers thrice here which should handle all situations with prisms and recievers.
+                        laserMove must be called twice to move the laser seperately in both directions.
+                        Colours are updated so that if, for instance, one laser from a prism hits a reciever, and the other hits a door, the door will be opened and the second laser can go through.
+                        Colours and lasers are updated an extra time if the same occurs in the other order, so a door is hit first then a reciever. 
+                        This way the first laser is updated again with the final state of the level after both lasers moved initially.
+                        It is not possible to hit more doors and recievers without more prisms, which do all this again anyway.
+                        '''
+
                     break
                 elif objects[y][x][0] == 'b':
                     # If the laser collides with a box, start breaking it.
                     boxSprite(y, x, stage=1, spawner=objects[y][x][1])
                     break
                 else:
+                    if [y, x, True] in doors.values() or [y, x, False] in doors.values():
+                        # Also store it if the laser passes through an open door.
+                        hitDoor = [y, x, True]
                     laserSprite(x, y, dir=dir)
                 # panels[y][x].create_text(panelWidth/2, panelHeight/2, text=dir) #Debug code to check the direction of lasers
             except IndexError:
                 # If it tries to check a panel outside the range, which means it has left the screen and should stop.
                 break
+        return hitDoor
         # print(colours)
 
-    def updateColours():
+    def updateColours(fake=False):
+        updatedColours = {}
         for i in colours:
             try:
                 # If the reciever is not active after updating the laser
                 if not laserRecievers[i][3]:
                     # Set the colour value in the dictionary to false
                     colours[i] = False
-                    # This is done after updating rather than before to remove the need to create deactivated versions of all doors, box spawners, ect before creating activated versions
+                    # ~~This is done after updating rather than before to remove the need to create deactivated versions of all doors, box spawners, ect before creating activated versions~~
+                    # The above doesn't apply anymore because it caused many issues with doors and prisms
             except KeyError:
                 continue  # If the colour is not associated with a reciever, continue to the next colour
             try:
                 reverse = not colours[i]
                 # Run the event function in reverse mode to do things such as close doors when reciever is deactivated.
-                activateColour(reverse, colour=i)
+                activateColour(reverse, colour=i, fake=fake)
+                updatedColours[i] = colours[i] # Store the colour that has been changed
             except KeyError:
                 print(f"WARNING: '{i}' colour has no function set.")
+        return updatedColours
     # if first or not split:
     #     for c, i in laserRecievers.items():
     #         recieverSprite(i[0],i[1],laser=False,dir=i[2],colour=c)
             # print(f"Resetting '{c}' laser")
             # if not i[3]: #If emitter is not active
     # if not split: #Split is true if the laser has been split from a prism. This deletes lasers differently
-    for c, i in laserRecievers.items():
-        # Deactivate all reciever sprites (does not deactivate colours)
-        recieverSprite(i[0], i[1], dir=i[2], colour=c)
-    yLoop = 0
-    xLoop = 0
-    for j in objects:  # Iterate over existing lasers to remove them
-        for i in j:
-            if i[0] == "l" or i[0] == 'g':
-                panels[yLoop][xLoop].delete("main")
-                if i[0] == 'g':
-                    glass = True
-                else:
-                    glass = False
-                objects[yLoop][xLoop] = ['', '', '']
-                if glass:
-                    glassSprite(yLoop, xLoop)
-            xLoop += 1
-        xLoop = 0
-        yLoop += 1
-    for i in laserFloors:  # Reset glowing floors
-        setPanel(i[0], i[1], 'f')
-        laserFloors.remove(i)
 
+
+    def clearLasers(lasers = False):
+        yLoop = 0
+        xLoop = 0
+        for c, i in laserRecievers.items():
+            # Deactivate all reciever sprites (does not deactivate colours)
+            recieverSprite(i[0], i[1], dir=i[2], colour=c)
+        if lasers == False:
+            for j in objects:  # Iterate over existing lasers to remove them
+                for i in j:
+                    if i[0] == "l" or i[0] == 'g':
+                        panels[yLoop][xLoop].delete("main")
+                        if i[0] == 'g':
+                            glass = True
+                        else:
+                            glass = False
+                        objects[yLoop][xLoop] = ['', '', '']
+                        if glass:
+                            glassSprite(yLoop, xLoop)
+                    xLoop += 1
+                xLoop = 0
+                yLoop += 1
+        else:
+            # If a list of lasers to remove has been passed, only remove those.
+            for i in lasers:
+                y = i[0]
+                x = i[1]
+                if objects[y][x][0] == "l" or objects[y][x][0] == 'g':
+                        panels[y][x].delete("main")
+                        if objects[y][x][0] == 'g':
+                            glass = True
+                        else:
+                            glass = False
+                        objects[y][x] = ['', '', '']
+                        if glass:
+                            glassSprite(y, x)
+
+        for i in laserFloors:  # Reset glowing floors
+            setPanel(i[0], i[1], 'f')
+            laserFloors.remove(i)
+    clearLasers()
+    # for i in colours:
+    #     colours[i] = False
+        # Reset all colours so lasers are updated with no colours active. This is the best way to fix all the many issues that prisms cause with this new laserUpdate system.
+    updateColours(fake=True)
+    # Fake only affects doors. This is because emitters and box spawners both have startup animations can be interrupted and messed up. 
+    # They don't need to be reset anyway because their animations won't have finished by the time the laser has updated, so they can't affect the laser for this tick.
+
+    doorsHit = []
     for c, i in laserEmitters.items():
         if i[3]:
-            laserMove(i[0], i[1], i[2])
-
+            laser = laserMove(i[0], i[1], i[2])
+            if laser != False:
+                # If it hit a door, add it to the list
+                doorsHit.append([c, laser]) # Store the emitter and door that it hit.
     updateColours()
+    for i in doorsHit:
+        y = i[1][0]
+        x = i[1][1]
+        if (objects[y][x][0] == '' and not i[1][2]) or (objects[y][x][0] == 'd' and i[1][2]):
+            # If the door either wasn't open and is now open, or was open and is now closed.
+            laserMove(laserEmitters[i[0]][0], laserEmitters[i[0]][1], laserEmitters[i[0]][2])
+            # Update the laser from that emitter
+            updateColours()
+
+
+    # print(f"Final colour update. Current colours: {colours}")
     for y in range(10):
         for x in range(10):
             # Also update box button functions
@@ -1260,6 +1380,7 @@ objectSprites = {  # As long as a function is added here with a code, it can be 
 
 
 def doorOpen(reverse, colour):
+    # Reverse is true if the door will close
     try:
         for i in doors[colour]:
             y = i[0]
@@ -1268,7 +1389,7 @@ def doorOpen(reverse, colour):
             if reverse and objects[y][x][0] in ['', 'l', 'd']:  # Door overrides lasers
                 doorSprite(y, x, colour=colour,
                            reverse=doorReverse, open=doorReverse)
-            elif not reverse and objects[y][x][0] in ['', 'l', 'd']:
+            elif not reverse and objects[y][x][0] in ['', 'd']:
                 doorSprite(y, x, colour=colour, reverse=doorReverse,
                            open=not doorReverse)
         panels[y][x].tag_raise('frame')
@@ -1325,16 +1446,21 @@ def levelEnd(inactive=False, colour=False):
         return  # If the emitter is not active, dont run
     freeze()
     # Run the function set to run when the level ends
-    root.after(2000, endEvent)
+    global runEndEvent
+    runEndEvent = root.after(2000, endEvent)
 
 
-def activateColour(reverse, colour):
+def activateColour(reverse, colour, fake=False):
     '''Run all the colour activation functions for this colour, which will do nothing if not applicable.'''
-    if colour == 'red':
+    if frozen:
+        return
+    if colour == 'end':
         levelEnd(reverse)
     doorOpen(reverse, colour)
-    boxSpawnerActivate(reverse, colour)
-    emitterActivate(reverse, colour)
+    if not fake:
+        # See comment in laserUpdate
+        boxSpawnerActivate(reverse, colour)
+        emitterActivate(reverse, colour)
 
 
 # Fake versions of all the objects that are non-functional sprites with no actual code.
@@ -1579,7 +1705,7 @@ def recieverSpriteFake(panel, setData=False, **data):
     try:
         colour = data['colour']
     except KeyError:
-        colour = 'red'
+        colour = 'end'
     panelWidth = panel.winfo_width()
     panelHeight = panel.winfo_height()
 
@@ -1588,8 +1714,30 @@ def recieverSpriteFake(panel, setData=False, **data):
         outline = laserColours[colour]
     except KeyError:
         outline = "#FFFFFF"  # If the colour is not yet set in the dictionary, use a placeholder
-    oval = panel.create_oval(0, panelHeight/2, panelWidth, panelHeight,
-                             outline=outline, fill="#3e3e3e", width=6, tags="main")
+    w = panelWidth
+    h = panelHeight
+    if dir == 0:
+        x1 = 0
+        y1 = 0
+        x2 = w
+        y2 = h/2
+    elif dir == 1:
+        x1 = w
+        y1 = 0
+        x2 = w/2
+        y2 = h
+    elif dir == 2:
+        x1 = 0
+        y1 = h/2
+        x2 = w
+        y2 = h
+    elif dir == 3:
+        x1 = 0
+        y1 = 0
+        x2 = w/2
+        y2 = h
+    oval = panel.create_oval(
+        x1, y1, x2, y2, outline=outline, fill="#3e3e3e", width=6, tags="main")
     if laser:
         panel.itemconfig(oval, fill="#f88080")
 
@@ -1626,7 +1774,7 @@ def doorSpriteFake(panel, setData=False, **data):
     try:
         open = data['open']
     except KeyError:
-        open = False
+        open = reverse
     try:
         noborder = data['noborder']
     except KeyError:
@@ -1754,7 +1902,7 @@ def boxButtonSpriteFake(panel, setData=False, **data):
     try:
         colour = data['colour']
     except KeyError:
-        colour = 'red'
+        colour = 'end'
     panelWidth = panel.winfo_width()
     panelHeight = panel.winfo_height()
 

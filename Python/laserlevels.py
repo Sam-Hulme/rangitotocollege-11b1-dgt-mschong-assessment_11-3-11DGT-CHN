@@ -12,7 +12,14 @@ import copy
 
 def selectInit(selectedObject, movables):
     '''Automatically select a box and bind movement keys and mouse clicking to boxes'''
-    objectSelect(0, movables[0])
+    for i in movables:
+        y = i.grid_info()['row']
+        x = i.grid_info()['column']
+        if [y, x] == selectedObject:
+            # Check which object in the objects list should start selected
+            selectedPanel = i
+            break
+    objectSelect(0, selectedPanel)
     laser.selectedObject = selectedObject
     root.bind("<Key>", lambda event: objectMove(event, selectedObject))
     for i in movables:
@@ -37,7 +44,7 @@ def level0():
     movables.append(mirrorSprite(2, 7, flipped=False))
 
     emitterSprite(6, 7, active=False, dir=0)
-    recieverSprite(2, 2, laser=False, dir=3, colour='red')
+    recieverSprite(2, 2, laser=False, dir=3, colour='end')
 
     # laserEvent(
     #     red = levelEnd
@@ -45,7 +52,7 @@ def level0():
     #     #Use lambda for single expression functions
     # )
 
-    selectInit((2, 7), movables)
+    selectInit([2, 7], movables)
 
 
 levels.append(level0)
@@ -67,13 +74,13 @@ def level1():
     # boxes.append(boxSprite(6,6,True))
 
     emitterSprite(8, 7, active=False, dir=0)
-    recieverSprite(8, 2, laser=False, dir=2, colour='red')
+    recieverSprite(8, 2, laser=False, dir=2, colour='end')
 
     # laserEvent(
     #     red = levelEnd
     #     #Put functions for different colours here
     # )
-    selectInit((5, 3), movables)
+    selectInit([5, 3], movables)
 
 
 levels.append(level1)
@@ -89,15 +96,15 @@ def level2():
     fillRect([9, 1], [9, 9], "w")
     fillRect([6, 1], [8, 8], 'f')
 
-    setPanel(5, 1, 'd', colour='green')
+    setPanel(5, 1, 'd', colour='red')
 
     movables = []
     movables.append(mirrorSprite(3, 4, flipped=False))
     movables.append(mirrorSprite(8, 1, flipped=True))
 
     emitterSprite(4, 8, active=False, dir=3)
-    recieverSprite(1, 8, laser=False, dir=1, colour='red')
-    recieverSprite(0, 3, laser=False, dir=0, colour='green')
+    recieverSprite(1, 8, laser=False, dir=1, colour='end')
+    recieverSprite(0, 3, laser=False, dir=0, colour='red')
 
     # laserEvent(
     #     green = doorOpen,
@@ -105,7 +112,7 @@ def level2():
     #     #Put functions for different colours here
     # )
 
-    selectInit((3, 4), movables)
+    selectInit([3, 4], movables)
 
 
 levels.append(level2)
@@ -119,7 +126,7 @@ def level3():
     fillRect([1, 6], [3, 7], 'f')
     fillRect([1, 8], [8, 8], 'g')
 
-    fillRect([4, 1], [4, 4], 'd', colour='green')
+    fillRect([4, 1], [4, 4], 'd', colour='red')
 
     movables = []
     movables.append(mirrorSprite(4, 7, flipped=False))
@@ -128,15 +135,15 @@ def level3():
     movables.append(mirrorSprite(7, 9, flipped=True))
 
     emitterSprite(8, 7, dir=0)
-    recieverSprite(8, 2, laser=False, dir=2, colour='green')
-    recieverSprite(1, 9, laser=False, dir=0, colour="red")
+    recieverSprite(8, 2, laser=False, dir=2, colour='red')
+    recieverSprite(1, 9, laser=False, dir=0, colour="end")
 
     # laserEvent(
     #    red = doorOpen,
     #    green = levelEnd
     # )
 
-    selectInit((5, 9), movables)
+    selectInit([4, 7], movables)
 
 
 levels.append(level3)
@@ -154,7 +161,7 @@ def level4():
     glassSprite(2, 8)
 
     setPanel(2, 3, 'd', colour='green')
-    setPanel(1, 8, 'd', colour='blue')
+    setPanel(1, 8, 'd', colour='red')
 
     movables = []
     movables.append(prismSprite(1, 2, dir=0))
@@ -163,9 +170,9 @@ def level4():
     # TODO: make it more clear that boxes keep doors open
     movables.append(mirrorSprite(1, 6, flipped=False))
     emitterSprite(9, 5, active=False, dir=0)
-    recieverSprite(0, 3, laser=False, dir=0, colour='blue')
+    recieverSprite(0, 3, laser=False, dir=0, colour='red')
     recieverSprite(6, 9, laser=False, dir=1, colour='green')
-    recieverSprite(1, 5, laser=False, dir=3, colour='red')
+    recieverSprite(1, 5, laser=False, dir=3, colour='end')
 
     # doorOpeners = dict.fromkeys(('red','green'), doorOpen)
     # laserEvent(
@@ -173,7 +180,7 @@ def level4():
     #     blue = levelEnd
     # )
 
-    selectInit((7, 3), movables)
+    selectInit([7, 3], movables)
 
 
 levels.append(level4)
@@ -216,7 +223,7 @@ def level5():
     recieverSprite(0, 3, laser=False, dir=0, colour='yellow')
     recieverSprite(1, 1, laser=False, dir=3, colour='purple')
     recieverSprite(9, 3, laser=False, dir=2, colour='orange')
-    recieverSprite(7, 9, laser=False, dir=1, colour='red')
+    recieverSprite(7, 9, laser=False, dir=1, colour='end')
 
     # doorOpeners = dict.fromkeys(('green','blue','yellow','purple','orange'), doorOpen)
     # laserEvent(
@@ -227,7 +234,7 @@ def level5():
     # TODO: Split laser doesn't move through door opened on the same frame
     # TODO: Change door functions to allow colour to be set when door created, automatically setting up recievers.
 
-    selectInit((6, 6), movables)
+    selectInit([6, 6], movables)
 
 
 levels.append(level5)
@@ -250,7 +257,7 @@ def level6():
     recieverSprite(5, 0, dir=3, colour='blue')
     recieverSprite(4, 2, dir=0, colour='yellow')
     recieverSprite(1, 9, dir=1, colour='purple')
-    recieverSprite(9, 8, dir=2, colour='red')
+    recieverSprite(9, 8, dir=2, colour='end')
 
     # emitterActivators = dict.fromkeys(('green','blue','yellow','purple'), emitterActivate)
     # laserEvent(
@@ -302,7 +309,7 @@ def level7():
     recieverSprite(0, 2, colour='blue', dir=0)
     recieverSprite(0, 4, colour='green', dir=0)
     boxButtonSprite(0, 0, colour='yellow')
-    boxButtonSprite(5, 9, colour='red')
+    boxButtonSprite(5, 9, colour='end')
     recieverSprite(0, 8, dir=0, colour='purple')
     emitterSprite(9, 8, dir=0, colour='yellow')
     setPanel(1, 2, 'd', colour='yellow')
@@ -310,7 +317,7 @@ def level7():
     setPanel(1, 0, 'd', colour='yellow', reverse=True, open=True)
     setPanel(4, 9, 'd', colour='purple')
 
-    selectInit((0, 9), movables)
+    selectInit([0, 9], movables)
 
     # def yellow(reverse, colour):
     #     doorOpen(reverse, colour)
@@ -322,7 +329,6 @@ levels.append(level7)
     #     yellow = yellow
     # )
 
-
 def level8():
 
     movables = []
@@ -333,12 +339,17 @@ def level8():
     emitterSprite(8, 9, dir=0, colour='red')
     boxButtonSprite(5, 4, colour='red')
 
-    selectInit((5, 7), movables)
+    selectInit([5, 7], movables)
 
     # laserEvent(red = emitterActivate)
 
 
 def levelEditor():
+    try:
+        root.after_cancel(laser.runEndEvent) 
+        # Cancel the event from running this again
+    except ValueError:
+        pass
     global exitButton
     try:
         exitButton.destroy()
@@ -347,6 +358,8 @@ def levelEditor():
     global editorLevelTemp
     global selectedObjectTemp
     global selectedObject
+    global revealSelected
+    revealSelected = ''
     def selectIndicatorFlash(panel, draw):
         """Flash the selection indicator on and off for the selected panel."""
         global selectedObject
@@ -388,6 +401,7 @@ def levelEditor():
     selectableObjects = []
     global objectData
     objectData = {}
+
     for o, sprite, i in zip(fakeObjectSprites, fakeObjectSprites.values(), range(10)):
         panel = Canvas(root, width=48, height=48, bg='black',
                        highlightthickness=0, bd=0)
@@ -399,20 +413,27 @@ def levelEditor():
             panel.grid(row=i-5, column=12)
         # Update info so canvas width and height are accurate.
         root.update_idletasks()
-        sprite(panel, dir=0, flipped=False, noborder=True)
+        if o == 'r':
+            dir = 2 # Reciever is upside down to start.
+        else:
+            dir = 0
+        sprite(panel, dir=dir, flipped=False, noborder=True)
         selectableObjects.append(panel)
         # Current has to be used because otherwise there is a bug where it always uses the last value of the loop for every object
         panel.bind("<Button-1>", lambda event, currentPanel=panel,
                    currentObj=o: selectObject(currentPanel, currentObj))
-    rotate = Canvas(root, width=48, height=48, bg='black',
+    
+    dataButtons = Frame(root, bg='black', borderwidth=0)
+    dataButtons.grid(row=6, column=10, columnspan=3, rowspan=3)
+    rotate = Canvas(dataButtons, width=48, height=48, bg='black',
                     highlightthickness=0, bd=0)
-    delete = Canvas(root, width=48, height=48, bg='black',
+    delete = Canvas(dataButtons, width=48, height=48, bg='black',
                     highlightthickness=0, bd=0)
-    rect = Canvas(root, width=48, height=48, bg='black',
+    rect = Canvas(dataButtons, width=48, height=48, bg='black',
                   highlightthickness=0, bd=0)
-    rotate.grid(row=6, column=10, rowspan=2)
-    delete.grid(row=6, column=11, rowspan=2)
-    rect.grid(row=6, column=12, rowspan=2)
+    rotate.grid(row=0, column=0, pady=25, padx=10)
+    delete.grid(row=0, column=1, pady=25, padx=10)
+    rect.grid(row=0, column=2, pady=25, padx=10)
 
     root.update_idletasks()
     rotateSprite(rotate)
@@ -423,13 +444,20 @@ def levelEditor():
     colours = {False: "#4E4E4E"}
     colours.update(laserColours.items())
 
-    colourFrame = Frame(root, bg='black', borderwidth=0)
-    colourFrame.grid(row=8, column=10, columnspan=3)
+    colourFrame = Frame(dataButtons, bg='black', borderwidth=0)
+    colourFrame.grid(row=1, column=0, columnspan=3)
     colourButtons = {}
+
     for n, c, i in zip(colours, colours.values(), range(len(laserColours))):
         panel = Canvas(colourFrame, width=36, height=36,
                        bg='black', highlightthickness=0, bd=0)
-        panel.grid(row=0, column=i, padx=2)
+        if n == False:
+            rowspan = 2
+            column = 0
+        else:
+            rowspan = 1
+            column = i-((i-1)//3*3)+1
+        panel.grid(row=i//4, column=column, padx=2, pady=2, rowspan=rowspan)
         root.update_idletasks()
         w = panel.winfo_width()
         h = panel.winfo_height()
@@ -440,15 +468,29 @@ def levelEditor():
                    current=n: selectColour(current))
         colourButtons[n] = [panel, circle]
 
+
     def selectObject(panel, object):
         global objectData
         try:
             # Reset the previously selected panel and clear the objectData dictionary
             objectData['panel'].delete('selected')
+            if objectData['object'] == 'r':
+                dir = 2
+            else:
+                dir = 0
             fakeObjectSprites[objectData['object']](
-                objectData['panel'], dir=0, flipped=False, noborder=True)
+                objectData['panel'], dir=dir, flipped=False, noborder=True)
+            if objectData['colour'] == 'end':
+                objectData['colour'] = False
             colourButtons[objectData['colour']][0].itemconfigure(
                 colourButtons[objectData['colour']][1], outline="#9a9a9a")
+            try:
+                objectData['panel'].after_cancel(objectData['after_id'])
+                # Cancel previous delay
+            except ValueError:
+                pass
+            except KeyError:
+                pass
         except KeyError:
             pass  # Continue if there is no panel previously selected
         delete.delete('selected')
@@ -456,18 +498,46 @@ def levelEditor():
         selectIndicator(panel)
         objectData['object'] = object
         objectData['panel'] = panel
-        objectData['dir'] = 0
+        if object == 'r':
+            objectData['dir'] = 2
+        else:
+            objectData['dir'] = 0
         objectData['flipped'] = False
-        if object in ['e', 's']:  # Objects with default colours
-            objectData['colour'] = False
-        else:  # Objects that need a colour
+
+        if object in ['r', 'n']:  # Objects that need a colour
+            objectData['colour'] = 'end'
+        elif object == 'd':
             objectData['colour'] = 'red'
+        else: # Objects with default colours
+            objectData['colour'] = False
+
+        if object in ['r', 'n', 's', 'e']:
+            colourButtons[False][0].itemconfig(colourButtons[False][1], outline="#6cca41") 
+            # Show that the default colour is selected
+        elif object == 'd':
+            colourButtons['red'][0].itemconfig(colourButtons['red'][1], outline="#6cca41") 
+            # Red is the default for doors.
+
+        if object in ['r', 'n']:
+            colourButtons[False][0].itemconfig(colourButtons[False][1], fill="#e2acb4")
+            # Change the default colour button to the end colour
+        else:
+            colourButtons[False][0].itemconfig(colourButtons[False][1], fill="#4E4E4E")
+            # Revert it if a different object is selected.
         objectData['reverse'] = False
+
     def rotateObject(event):
         try:
             objectData['panel']
         except KeyError:
             return  # Don't run if an object hasn't been selected yet.
+        try:
+            objectData['panel'].after_cancel(objectData['after_id'])
+            # Cancel previous delay
+        except ValueError:
+            pass
+        except KeyError:
+            pass
         if objectData['object'] == 'm':
             objectData['flipped'] = not objectData['flipped']
         elif objectData['object'] == 'd':
@@ -481,6 +551,7 @@ def levelEditor():
             objectData['dir'] = dir
         fakeObjectSprites[objectData['object']](objectData['panel'], dir=objectData['dir'],
                                                 flipped=objectData['flipped'], reverse=objectData['reverse'], colour=objectData['colour'])
+        
         objectData['after_id'] = objectData['panel'].after(
             2000, lambda panel=objectData['panel']: panel.tag_raise('selected'))
     rotate.bind("<Button-1>", rotateObject)
@@ -490,22 +561,37 @@ def levelEditor():
             objectData['panel']
         except KeyError:
             return  # Don't run if an object hasn't been selected yet.
-        if colour == False and objectData['object'] not in ['e', 's']:
-            # If the colour is false but the object can't have a default colour, set the colour to red.
+        try:
+            objectData['panel'].after_cancel(objectData['after_id'])
+            # Cancel previous delay
+        except ValueError:
+            pass
+        except KeyError:
+            pass
+        if colour == False and objectData['object'] in ['r', 'n']:
+            colour = 'end'
+        if colour == False and objectData['object'] == 'd':
+            # Doors must have a colour and don't activate colours, use red as a default.
             colour = 'red'
-            # TODO: Make default colour disappear when an object that requires a colour is selected.
         try:  # Remove the green outline from the previous colour if it exists.
+            if objectData['colour'] == 'end':
+                objectData['colour'] = False 
+                # Set object data colour to false because end is not a colour in the colourButtons dictionary.
             colourButtons[objectData['colour']][0].itemconfigure(
                 colourButtons[objectData['colour']][1], outline="#9a9a9a")
         except KeyError:
             pass
         objectData['colour'] = colour
+
         fakeObjectSprites[objectData['object']](
             objectData['panel'], colour=objectData['colour'], dir=objectData['dir'], flipped=objectData['flipped'])
-
+        
+        if colour == 'end':
+            colour = False
         colourButtons[colour][0].itemconfigure(
             colourButtons[colour][1], outline="#6cca41")
-        objectData['panel'].after(
+
+        objectData['after_id'] = objectData['panel'].after(
             2000, lambda panel=objectData['panel']: panel.tag_raise('selected'))
 
     def selectDelete(event):
@@ -694,8 +780,8 @@ def levelEditor():
     exit = 0
     # Create the button variables so they can be cleared
 
-    buttonFrame = Frame(root, bg='black', borderwidth=0)
-    buttonFrame.grid(row=9,column=10,columnspan=3)
+    buttonFrame = Frame(root, bg='black', borderwidth=5)
+    buttonFrame.grid(row=9,column=10,columnspan=3,sticky='ew')
 
     def returnToEditor():
         nextLevel(load=-2) # Clear the level
@@ -715,7 +801,7 @@ def levelEditor():
         editorObjects.append(rotate)
         editorObjects.append(delete)
         editorObjects.append(rect)
-        editorObjects.append(colourFrame)
+        editorObjects.append(dataButtons)
         editorObjects.extend(selectableObjects)
         editorObjects.extend(colourPanels) 
         editorObjects.extend([play,save,load,exit])
@@ -748,10 +834,12 @@ def levelEditor():
     load = Button(buttonFrame,text='Load', command=lambda: clearEditor(False))
     exit = Button(buttonFrame,text='Exit', command=lambda: root.destroy())
 
-    play.grid(row=0,column=0,sticky='nsew')
-    save.grid(row=0,column=1,sticky='nsew')
-    load.grid(row=1,column=1,sticky='nsew')
-    exit.grid(row=1,column=0,sticky='nsew')
+    play.grid(row=0,column=0)
+    save.grid(row=0,column=1)
+    load.grid(row=0,column=2)
+    exit.grid(row=0,column=3)
+    for i in range(4):
+        buttonFrame.columnconfigure(i, weight=1)
 
 levels.append(levelEditor) # levelEditor is 'level 8' so that it is loaded when level 7 is completed
 
@@ -808,6 +896,11 @@ def createLevel(objectsData, initialSelect, fake=False):
 # This will make it less confusing and also make red actually do something for objects activated by colours
 
 def levelSelector():
+    try:
+        root.after_cancel(laser.runEndEvent) 
+        # Cancel the event from running this again
+    except ValueError:
+        pass
     global exitButton
     try:
         exitButton.destroy()
@@ -991,8 +1084,10 @@ def levelSelector():
         
     
 
+if not os.path.isdir("customLevels"):
+    # If the custom levels folder doesn't exist
+    os.mkdir("customLevels")
     
-
 editorStr = sys.argv[1] # Argument passed to this script from menu.py
 editor = bool(editorStr)
 if editor:

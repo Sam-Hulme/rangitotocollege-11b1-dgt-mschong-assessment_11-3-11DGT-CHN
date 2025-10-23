@@ -27,19 +27,19 @@ def numberSprite(y, x, number, ghost=False):
         # Store the highest number in a variable used to calculate the player's score
         highestNumber = displayNumber
         if highestNumber == 2048:
-            # colour = "#57DB16"
-            # outlineColour = "#A4FB78"
+            colour = "#57DB16"
+            outlineColour = "#A4FB78"
             end(False)
-    if number == 11:
-        panels[y][x].create_image(
-            panelWidth/2, panelHeight/2, image=mschong, tags='main')
-        panels[y][x].create_rectangle(
-            0, 0, panelWidth, panelHeight, width=6, fill='', outline='grey', tags='main')
-    else:
-        panels[y][x].create_rectangle(
-            0, 0, panelWidth, panelHeight, width=6, outline=outlineColour, fill=colour, tags='main')
-        panels[y][x].create_text(panelWidth/2, panelHeight/2, text=displayNumber,
-                                 fill='white', font=("Arial", 16, 'bold'), tags='main')
+    # if number == 11:
+    #     panels[y][x].create_image(
+    #         panelWidth/2, panelHeight/2, image=mschong, tags='main')
+    #     panels[y][x].create_rectangle(
+    #         0, 0, panelWidth, panelHeight, width=6, fill='', outline='grey', tags='main')
+    # else:
+    panels[y][x].create_rectangle(
+        0, 0, panelWidth, panelHeight, width=6, outline=outlineColour, fill=colour, tags='main')
+    panels[y][x].create_text(panelWidth/2, panelHeight/2, text=displayNumber,
+                                fill='white', font=("Arial", 16, 'bold'), tags='main')
     if not ghost:  # Ghost is true if the number is displayed for the moving animation and shouldn't actually exist as an object.
         numbers.append([y, x, number])
         objects[y][x][0] = number

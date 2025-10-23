@@ -52,11 +52,11 @@ def start(startEditor = ''):
 
 def runGame():
     if currentGame == 1:
-        subprocess.run(["python","laserlevels.py",editor]) # Info on whether or not to start in the editor is passed to the laser script
+        subprocess.run(["python3","laserlevels.py",editor]) # Info on whether or not to start in the editor is passed to the laser script
     elif currentGame == 2:
-        subprocess.run(["python","game2048.py"]) # 2048 had to be named 'game2048' because just a number didn't work
+        subprocess.run(["python3","game2048.py"]) # 2048 had to be named 'game2048' because just a number didn't work
     elif currentGame == 3:
-        subprocess.run(["python","dont2048.py"])
+        subprocess.run(["python3","dont2048.py"])
     runningText.destroy()
 
 title = Label(root,text=currentTitle,fg='white',bg='black',font=('Arial',20,'bold'))
@@ -92,6 +92,7 @@ except FileNotFoundError:
     f.write('0') #Level
     f.write('\n') # New line
     f.write('False') #Editor unlocked
+    f.close()
 
 if editorAvailable:
     levelEditorButton.grid(row=3,column=1,pady=(0,20))
