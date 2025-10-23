@@ -298,7 +298,6 @@ def level7():
     movables.append(mirrorSprite(7, 2, flipped=False))
     movables.append(mirrorSprite(8, 5, flipped=False))
     movables.append(mirrorSprite(5, 6, flipped=False))
-    movables.append(boxSpawnerSprite(6, 9))
 
     # boxSprite(3,0,stage=0)
     # boxSprite(2,1,stage=1)
@@ -1087,7 +1086,7 @@ def levelSelector():
 if not os.path.isdir("customLevels"):
     # If the custom levels folder doesn't exist
     os.mkdir("customLevels")
-    
+
 editorStr = sys.argv[1] # Argument passed to this script from menu.py
 editor = bool(editorStr)
 if editor:
