@@ -1,10 +1,12 @@
-'''2048 but you have to lose before getting 128'''
+"""2048 but you have to lose before getting 128."""
 from tkinter import *
 from core import *
+import core
 import random
 
 init(columns=4, rows=4, width=64, height=64)
-from core import panelWidth, panelHeight
+panelWidth = core.panelWidth
+panelHeight = core.panelHeight
 
 root.title("Don't 2048")
 
@@ -12,8 +14,12 @@ highestNumber = 0
 
 
 def numberSprite(y, x, number, ghost=False):
-    if not ghost and not objects[y][x][1] == False:
-        panels[y][x].after_cancel(objects[y][x][1])
+    """The sprites for a number."""
+    if not ghost and not objects[y][x][1] is not False:
+        try:
+            panels[y][x].after_cancel(objects[y][x][1])
+        except ValueError:
+            pass
         # False is used as a default because after event ids are stored as integers so 0 might be an id
         objects[y][x][1] = False
     panels[y][x].delete('main')
@@ -37,11 +43,13 @@ def numberSprite(y, x, number, ghost=False):
 
 
 def deleteGhost(y, x):
+    """Deletes ghost numbers."""
     if objects[y][x][0] == 0:  # Don't delete if it actually does exist, this is a final failsafe if it runs at the exact wrong time
         panels[y][x].delete('main')
 
 
 def fuseNumbers(y, x, number):
+    """Combines two numbers into one larger one."""
     newNumber = number+1
     for i in numbers:
         if i[0] == y and i[1] == x:
@@ -61,6 +69,7 @@ def fuseNumbers(y, x, number):
 
 
 def move(event):
+    """The main function that runs when a movement key is pressed."""
     if event.keysym in ['w', 'W', 'Up']:
         dir = 0
         axis = 0
@@ -164,6 +173,7 @@ points = [1000, 500, 100, 5, 0]
 
 
 def goalFail(number):
+    """Crosses out a number when it is reached."""
     global currentGoal
     currentGoal = number+1
     goal = goals[number-5]
@@ -181,7 +191,7 @@ extras = []
 
 
 def reset():
-    '''Reset and initialise variables. Used at the start and when restarting.'''
+    """Reset and initialise variables. Used at the start and when restarting."""
     global numbers
     numbers = []  # Numbers is used to iterate over each number box that exists
     for y in panels:
@@ -228,6 +238,7 @@ reset()
 
 
 def end(fail):
+    """Ends the game if the user wins or loses."""
     print("Game Over")
     if fail:
         title = "Didn\'t 2048!"

@@ -1,10 +1,13 @@
+"""2048 game code."""
 from tkinter import *
 from core import *
+import core
 import random
 from PIL import Image, ImageTk
 
 init(columns=4, rows=4, width=64, height=64)
-from core import panelWidth, panelHeight
+panelWidth = core.panelWidth
+panelHeight = core.panelHeight
 
 root.title("2048")
 
@@ -13,18 +16,28 @@ mschong = ImageTk.PhotoImage(Image.open('mschong.png'))
 
 
 def numberSprite(y, x, number, ghost=False):
-    if not ghost and not objects[y][x][1] == False:
-        panels[y][x].after_cancel(objects[y][x][1])
-        # False is used as a default because after event ids are stored as integers so 0 might be an id
+    """The sprites for a number."""
+    if not ghost and not objects[y][x][1] is not False:
+        try:
+            panels[y][x].after_cancel(objects[y][x][1])
+        except ValueError:
+            pass
+        # Use False as a default because after event ids are stored as
+        # integers so 0 might be an id
         objects[y][x][1] = False
     panels[y][x].delete('main')
-    displayNumber = 2**number  # Number variable is linear and increases by one each time
+    displayNumber = 2**number  # Number variable is linear and increases
+    # by one each time
     blue = number*8+3
     colour = f"#{hex(9+blue)[2:]}{hex(29+blue)[2:]}{hex(51+blue)[2:]}"
-    outlineColour = f"#{hex(29+blue)[2:]}{hex(49+blue)[2:]}{hex(71+blue)[2:]}"
+    outlineColour = (
+        f"#{hex(29+blue)[2:]}{hex(49+blue)[2:]}"
+        f"{hex(71+blue)[2:]}"
+    )
     global highestNumber
     if displayNumber > highestNumber:
-        # Store the highest number in a variable used to calculate the player's score
+        # Store the highest number in a variable used to calculate the
+        # player's score
         highestNumber = displayNumber
         if highestNumber == 2048:
             colour = "#57DB16"
@@ -34,23 +47,36 @@ def numberSprite(y, x, number, ghost=False):
     #     panels[y][x].create_image(
     #         panelWidth/2, panelHeight/2, image=mschong, tags='main')
     #     panels[y][x].create_rectangle(
-    #         0, 0, panelWidth, panelHeight, width=6, fill='', outline='grey', tags='main')
+    #         0, 0, panelWidth, panelHeight, width=6, fill='', outline='grey',
+    #         tags='main')
     # else:
     panels[y][x].create_rectangle(
-        0, 0, panelWidth, panelHeight, width=6, outline=outlineColour, fill=colour, tags='main')
-    panels[y][x].create_text(panelWidth/2, panelHeight/2, text=displayNumber,
-                                fill='white', font=("Arial", 16, 'bold'), tags='main')
-    if not ghost:  # Ghost is true if the number is displayed for the moving animation and shouldn't actually exist as an object.
+        0, 0, panelWidth, panelHeight, width=6,
+        outline=outlineColour, fill=colour, tags='main'
+    )
+    panels[y][x].create_text(
+        panelWidth/2,
+        panelHeight/2,
+        text=displayNumber,
+        fill='white',
+        font=("Arial", 16, 'bold'),
+        tags='main'
+    )
+    if not ghost:  # Ghost is true for moving animation; it's not permanent.
         numbers.append([y, x, number])
         objects[y][x][0] = number
 
 
 def deleteGhost(y, x):
-    if objects[y][x][0] == 0:  # Don't delete if it actually does exist, this is a final failsafe if it runs at the exact wrong time
+    """Deletes ghost numbers."""
+    if objects[y][x][0] == 0:
+        # Don't delete if it actually does exist; this is a final failsafe
+        # if it runs at the exact wrong time
         panels[y][x].delete('main')
 
 
 def fuseNumbers(y, x, number):
+    """Combines two numbers into one larger one."""
     newNumber = number+1
     for i in numbers:
         if i[0] == y and i[1] == x:
@@ -70,6 +96,7 @@ def fuseNumbers(y, x, number):
 
 
 def move(event):
+    """The main function that runs when a movement key is pressed."""
     if event.keysym in ['w', 'W', 'Up']:
         dir = 0
         axis = 0
@@ -89,9 +116,12 @@ def move(event):
     else:
         return  # If the pressed key isn't a direction key
     oldNumbers = sorted(numbers, key=lambda i: i[axis], reverse=reverse)
-    """Sort the numbers array into a new array in ascending or decending order of the x or y axis depending on the direction to move.
-    This means that there will never be the issue of a number colliding with another before that number moves away, causing it to not move fully.
-    Make a new list because removing items from a list in a for loop can break it, and to not mess up the order of the actual numbers array."""
+    """Sort the numbers array into a new array in ascending or decending
+    order of the x or y axis depending on the direction to move. This means
+    that there will never be the issue of a number colliding with another
+    before that number moves away, causing it to not move fully. Make a new
+    list because removing items from a list in a for loop can break it, and
+    to not mess up the order of the actual numbers array."""
     moved = False
     for i in oldNumbers:
         fused = False
@@ -102,7 +132,8 @@ def move(event):
         numbers.remove(i)
         objects[y][x][0] = 0
         while True:
-            xOld = x  # Store a copy of the previous x and y values to revert to if another number is in the way
+            xOld = x  # Store a copy of the previous x and y values to
+            # revert to if another number is in the way
             yOld = y
             if dir == 0 and y > 0:
                 y -= 1
@@ -114,12 +145,14 @@ def move(event):
                 x -= 1
             else:
                 break
-            if not objects[y][x][0] == 0:  # Check if the box would move inside another
+            if not objects[y][x][0] == 0:  # Check if the box would move inside
+                # another
                 if objects[y][x][0] == i[2]:  # If both numbers are the same
                     fuseNumbers(y, x, i[2])
                     moved = True
                     fused = True
-                    break  # Don't run the usual code to create a new number box, this is done in the fuseNumbers function
+                    break  # Don't run the usual code to create a new number
+                    # box; this is done in the fuseNumbers function
                 else:
                     x = xOld  # Revert coordinates
                     y = yOld
@@ -127,7 +160,8 @@ def move(event):
             moved = True
 
             # print(x,i[2])
-            # Create a number at each location to make it look like the box actually moved
+            # Create a number at each location to make it look like the box
+            # actually moved
             numberSprite(y, x, i[2], True)
             # Wait a short time and then delete the fake number
             objects[y][x][1] = panels[y][x].after(30, deleteGhost, y, x)
@@ -139,7 +173,8 @@ def move(event):
         while True:
             y = random.randint(0, 3)
             x = random.randint(0, 3)
-            # If the random position is empty, create a new number there. Otherwise, try again.
+            # If the random position is empty, create a new number there.
+            # Otherwise, try again.
             if objects[y][x][0] == 0:
                 numberSprite(y, x, 1)
                 break
@@ -168,6 +203,7 @@ def move(event):
 
 
 def end(fail):
+    """Ends the game if the user wins or loses."""
     print("Game Over")
     if fail:
         title = "Game Over!"
@@ -181,13 +217,26 @@ def end(fail):
     frame.grid_propagate(0)
     frame.grid(row=4, column=0, columnspan=4, sticky='nsew', pady=(4, 0))
     extras.append(frame)
-    text = Label(frame, text=title, font=(
-        'Arial', 24, 'bold'), fg='white', bg='black')
-    text.place(x=frame.winfo_reqwidth() // 2,
-               y=frame.winfo_reqheight() // 2, anchor=CENTER)
+    text = Label(
+        frame,
+        text=title,
+        font=('Arial', 24, 'bold'),
+        fg='white',
+        bg='black'
+    )
+    text.place(
+        x=frame.winfo_reqwidth() // 2,
+        y=frame.winfo_reqheight() // 2,
+        anchor=CENTER
+    )
     extras.append(text)
-    scoreText = Label(root, text=subtitle, font=(
-        "Arial", 14), fg='white', bg='black')
+    scoreText = Label(
+        root,
+        text=subtitle,
+        font=("Arial", 14),
+        fg='white',
+        bg='black'
+    )
     extras.append(scoreText)
     scoreText.grid(row=5, column=0, columnspan=4, sticky='new', pady=(0, 4))
     if fail:
@@ -219,7 +268,9 @@ extras = []
 
 
 def reset():
-    '''Reset and initialise variables. Used at the start and when restarting.'''
+    """
+    Reset and initialise variables. Used at the start and when restarting.
+    """
     global numbers
     numbers = []  # Numbers is used to iterate over each number box that exists
     for y in panels:
@@ -227,7 +278,8 @@ def reset():
             x.delete('main')
             row = x.grid_info()['row']
             column = x.grid_info()['column']
-            # Objects is used for values that need to be accessed based on panel coordinates
+            # Objects is used for values that need to be accessed based on
+            # panel coordinates
             objects[row][column] = [0, False]
     for i in extras:
         i.destroy()
@@ -247,7 +299,7 @@ def exit():
 
 
 def cont():
-    '''Destroy all the text and buttons and continue the game.'''
+    """Destroy all the text and buttons and continue the game."""
     root.bind('<Key>', move)
     for i in extras:
         i.destroy()

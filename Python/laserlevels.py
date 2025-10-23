@@ -1,4 +1,4 @@
-'''The actual level design that imports and calls functions from the laser file.'''
+"""The actual level design that imports and calls functions from the laser file."""
 import tkinter
 from tkinter import *
 from laser import *
@@ -11,7 +11,7 @@ import copy
 
 
 def selectInit(selectedObject, movables):
-    '''Automatically select a box and bind movement keys and mouse clicking to boxes'''
+    """Automatically select a box and bind movement keys and mouse clicking to boxes"""
     for i in movables:
         y = i.grid_info()['row']
         x = i.grid_info()['column']
@@ -27,13 +27,13 @@ def selectInit(selectedObject, movables):
 
 
 # def doorRect(reverse,start,end):
-#     '''Open multiple doors'''
+#     """Open multiple doors"""
 #     for y in range(start[0],end[0]+1):
 #         for x in range(start[1],end[1]+1):
 #             doorOpen(reverse,y,x)
 
 def level0():
-    '''Basic laser and mirror reflection intro.'''
+    """Basic laser and mirror reflection intro."""
 
     fillRect([3, 2], [6, 6], "f")
     fillRect([2, 8], [6, 8], 'w')
@@ -60,7 +60,7 @@ levels.append(level0)
 
 
 def level1():
-    '''Moving mirrors intro.'''
+    """Moving mirrors intro."""
 
     fillRect([5, 3], [8, 6], "f")
     fillRect([3, 1], [8, 1], "w")
@@ -87,7 +87,7 @@ levels.append(level1)
 
 
 def level2():
-    '''Doors intro'''
+    """Doors intro"""
     fillRect([5, 2], [5, 8], "w")
     fillRect([2, 5], [3, 8], "f")
     fillRect([0, 9], [8, 9], "w")
@@ -119,7 +119,7 @@ levels.append(level2)
 
 
 def level3():
-    '''Glass intro'''
+    """Glass intro"""
     fillRect([0, 0], [9, 9], 'w')
     fillRect([1, 1], [8, 9], '')
     fillRect([1, 5], [8, 5], 'g')
@@ -150,7 +150,7 @@ levels.append(level3)
 
 
 def level4():
-    '''Prism intro'''
+    """Prism intro"""
     fillRect([0, 0], [9, 9], 'w')
     fillRect([1, 1], [8, 8], '')
     fillRect([2, 1], [2, 2], 'w')
@@ -197,7 +197,7 @@ levels.append(level4)
 
 
 def level5():
-    '''Advanced prisms'''
+    """Advanced prisms"""
     fillRect([0, 0], [9, 9], 'w')
     fillRect([1, 1], [8, 8], '')
     fillRect([7, 5], [8, 5], 'w')
@@ -241,7 +241,7 @@ levels.append(level5)
 
 
 def level6():
-    '''Colour-activated emitter intro'''
+    """Colour-activated emitter intro"""
     fillRect((4, 5), (9, 5), 'w')
     setPanel(5, 5, 'g')
     fillRect((3, 0), (3, 9), 'w')
@@ -264,9 +264,13 @@ def level6():
     #     **emitterActivators,
     #     red = levelEnd
     # )
+
+
 levels.append(level6)
 
+
 def level7():
+    """Boxes intro."""
     # Fill all panels in the bottom half with floors and leave empty gaps only where lasers go to make the level less confusing and intimidating.
     fillRect((5, 0), (9, 3), 'f')
     setPanel(5, 2, '')
@@ -312,7 +316,7 @@ def level7():
     recieverSprite(0, 8, dir=0, colour='purple')
     emitterSprite(9, 8, dir=0, colour='yellow')
     setPanel(1, 2, 'd', colour='yellow')
-    setPanel(1, 4, 'd', colour='purple', reverse=True, open=True)
+    # setPanel(2, 4, 'd', colour='purple', reverse=True, open=True)
     setPanel(1, 0, 'd', colour='yellow', reverse=True, open=True)
     setPanel(4, 9, 'd', colour='purple')
 
@@ -321,12 +325,15 @@ def level7():
     # def yellow(reverse, colour):
     #     doorOpen(reverse, colour)
     #     emitterActivate(reverse, colour)
+
+
 levels.append(level7)
-    # laserEvent(
-    #     blue = boxSpawnerActivate,
-    #     green = boxSpawnerActivate,
-    #     yellow = yellow
-    # )
+# laserEvent(
+#     blue = boxSpawnerActivate,
+#     green = boxSpawnerActivate,
+#     yellow = yellow
+# )
+
 
 def level8():
 
@@ -344,8 +351,9 @@ def level8():
 
 
 def levelEditor():
+    """Level editor that allows players to build and save their own levels."""
     try:
-        root.after_cancel(laser.runEndEvent) 
+        root.after_cancel(laser.runEndEvent)
         # Cancel the event from running this again
     except ValueError:
         pass
@@ -357,8 +365,7 @@ def levelEditor():
     global editorLevelTemp
     global selectedObjectTemp
     global selectedObject
-    global revealSelected
-    revealSelected = ''
+
     def selectIndicatorFlash(panel, draw):
         """Flash the selection indicator on and off for the selected panel."""
         global selectedObject
@@ -370,8 +377,10 @@ def levelEditor():
             panel.tag_raise('selected')
         else:
             panel.delete('selected')
-
-        panel.after(800, lambda: selectIndicatorFlash(panel, not draw)) 
+        global indicatorFlash
+        indicatorFlash = []
+        indicatorFlash.append(panel.after(800, lambda: selectIndicatorFlash(panel, not draw)))
+        indicatorFlash.append(panel)
         # Run the function again after 800ms with draw inverted.
 
     if editorLevelTemp:
@@ -379,20 +388,39 @@ def levelEditor():
         createLevel(editorLevelTemp, selectedObjectTemp, fake=True)
         selectedObject = selectedObjectTemp
         if selectedObject != []:
-            selectIndicatorFlash(panels[selectedObject[0]][selectedObject[1]], True)            
+            selectIndicatorFlash(
+                panels[selectedObject[0]][selectedObject[1]], True)
     laser.endEvent = levelEditor
     for y in range(10):
         for x in range(10):
-            # Create a border around each panel to highlight the grid objects can be created in.
+            # Create a border around each panel to highlight the grid objects
+            # can be created in.
             panels[y][x].create_rectangle(
-                0, 0, panelWidth-1, panelHeight-1, outline='white', width=1, tags='highlight')
+                0, 0, panelWidth-1, panelHeight-1,
+                outline='white', width=1, tags='highlight'
+            )
     titleFrame = Frame(root, bg='black', borderwidth=0)
-    text = Label(titleFrame, text='Level Editor', fg='white',
-                 bg='black', font=('Arial', 20, 'bold'))
-    subtext = Label(titleFrame, text='Select objects to add to level.',
-                    fg='white', bg='black', font=('Arial', 13))
-    selectionNote = Label(root, text='Right click movable object\nto make it start selected.',
-                    fg='white', bg='black', font=('Arial', 14, 'bold'))
+    text = Label(
+        titleFrame,
+        text='Level Editor',
+        fg='white',
+        bg='black',
+        font=('Arial', 20, 'bold')
+    )
+    subtext = Label(
+        titleFrame,
+        text='Select objects to add to level.',
+        fg='white',
+        bg='black',
+        font=('Arial', 13)
+    )
+    selectionNote = Label(
+        root,
+        text='Right click movable object\nto make it start selected.',
+        fg='white',
+        bg='black',
+        font=('Arial', 14, 'bold')
+    )
     titleFrame.grid(row=0, column=10, columnspan=3)
     text.grid(row=0, column=0, sticky='nsew')
     subtext.grid(row=1, column=0, sticky='nsew')
@@ -401,9 +429,12 @@ def levelEditor():
     global objectData
     objectData = {}
 
-    for o, sprite, i in zip(fakeObjectSprites, fakeObjectSprites.values(), range(10)):
-        panel = Canvas(root, width=48, height=48, bg='black',
-                       highlightthickness=0, bd=0)
+    for o, sprite, i in zip(
+            fakeObjectSprites, fakeObjectSprites.values(), range(10)):
+        panel = Canvas(
+            root, width=48, height=48, bg='black',
+            highlightthickness=0, bd=0
+        )
         if i < 3:
             panel.grid(row=i+2, column=10)
         elif i < 7:
@@ -413,23 +444,33 @@ def levelEditor():
         # Update info so canvas width and height are accurate.
         root.update_idletasks()
         if o == 'r':
-            dir = 2 # Reciever is upside down to start.
+            dir = 2  # Reciever is upside down to start.
         else:
             dir = 0
         sprite(panel, dir=dir, flipped=False, noborder=True)
         selectableObjects.append(panel)
-        # Current has to be used because otherwise there is a bug where it always uses the last value of the loop for every object
-        panel.bind("<Button-1>", lambda event, currentPanel=panel,
-                   currentObj=o: selectObject(currentPanel, currentObj))
-    
+        # Current has to be used because otherwise there is a bug where it
+        # always uses the last value of the loop for every object
+        panel.bind(
+            "<Button-1>",
+            lambda event, currentPanel=panel, currentObj=o:
+                selectObject(currentPanel, currentObj)
+        )
+
     dataButtons = Frame(root, bg='black', borderwidth=0)
     dataButtons.grid(row=6, column=10, columnspan=3, rowspan=3)
-    rotate = Canvas(dataButtons, width=48, height=48, bg='black',
-                    highlightthickness=0, bd=0)
-    delete = Canvas(dataButtons, width=48, height=48, bg='black',
-                    highlightthickness=0, bd=0)
-    rect = Canvas(dataButtons, width=48, height=48, bg='black',
-                  highlightthickness=0, bd=0)
+    rotate = Canvas(
+        dataButtons, width=48, height=48, bg='black',
+        highlightthickness=0, bd=0
+    )
+    delete = Canvas(
+        dataButtons, width=48, height=48, bg='black',
+        highlightthickness=0, bd=0
+    )
+    rect = Canvas(
+        dataButtons, width=48, height=48, bg='black',
+        highlightthickness=0, bd=0
+    )
     rotate.grid(row=0, column=0, pady=25, padx=10)
     delete.grid(row=0, column=1, pady=25, padx=10)
     rect.grid(row=0, column=2, pady=25, padx=10)
@@ -448,9 +489,11 @@ def levelEditor():
     colourButtons = {}
 
     for n, c, i in zip(colours, colours.values(), range(len(laserColours))):
-        panel = Canvas(colourFrame, width=36, height=36,
-                       bg='black', highlightthickness=0, bd=0)
-        if n == False:
+        panel = Canvas(
+            colourFrame, width=36, height=36,
+            bg='black', highlightthickness=0, bd=0
+        )
+        if not n:
             rowspan = 2
             column = 0
         else:
@@ -462,16 +505,20 @@ def levelEditor():
         h = panel.winfo_height()
         # 2 off the edges to fit the full circle and outline in the canvas.
         circle = panel.create_oval(
-            2, 2, w-2, h-2, fill=c, outline="#9a9a9a", width=4)
-        panel.bind("<Button-1>", lambda event,
-                   current=n: selectColour(current))
+            2, 2, w-2, h-2, fill=c, outline="#9a9a9a", width=4
+        )
+        panel.bind(
+            "<Button-1>",
+            lambda event, current=n: selectColour(current)
+        )
         colourButtons[n] = [panel, circle]
 
-
     def selectObject(panel, object):
+        """Select an object and remove the selection indicator from the previous object."""
         global objectData
         try:
-            # Reset the previously selected panel and clear the objectData dictionary
+            # Reset the previously selected panel and clear the objectData
+            # dictionary
             objectData['panel'].delete('selected')
             if objectData['object'] == 'r':
                 dir = 2
@@ -482,7 +529,9 @@ def levelEditor():
             if objectData['colour'] == 'end':
                 objectData['colour'] = False
             colourButtons[objectData['colour']][0].itemconfigure(
-                colourButtons[objectData['colour']][1], outline="#9a9a9a")
+                colourButtons[objectData['colour']][1],
+                outline="#9a9a9a"
+            )
             try:
                 objectData['panel'].after_cancel(objectData['after_id'])
                 # Cancel previous delay
@@ -507,25 +556,30 @@ def levelEditor():
             objectData['colour'] = 'end'
         elif object == 'd':
             objectData['colour'] = 'red'
-        else: # Objects with default colours
+        else:  # Objects with default colours
             objectData['colour'] = False
 
         if object in ['r', 'n', 's', 'e']:
-            colourButtons[False][0].itemconfig(colourButtons[False][1], outline="#6cca41") 
+            colourButtons[False][0].itemconfig(
+                colourButtons[False][1], outline="#6cca41")
             # Show that the default colour is selected
         elif object == 'd':
-            colourButtons['red'][0].itemconfig(colourButtons['red'][1], outline="#6cca41") 
+            colourButtons['red'][0].itemconfig(
+                colourButtons['red'][1], outline="#6cca41")
             # Red is the default for doors.
 
         if object in ['r', 'n']:
-            colourButtons[False][0].itemconfig(colourButtons[False][1], fill="#e2acb4")
+            colourButtons[False][0].itemconfig(
+                colourButtons[False][1], fill="#e2acb4")
             # Change the default colour button to the end colour
         else:
-            colourButtons[False][0].itemconfig(colourButtons[False][1], fill="#4E4E4E")
+            colourButtons[False][0].itemconfig(
+                colourButtons[False][1], fill="#4E4E4E")
             # Revert it if a different object is selected.
         objectData['reverse'] = False
 
     def rotateObject(event):
+        """Rotate or otherwise modify an object (such as reversing doors)."""
         try:
             objectData['panel']
         except KeyError:
@@ -548,14 +602,22 @@ def levelEditor():
             if dir > 3:
                 dir = 0
             objectData['dir'] = dir
-        fakeObjectSprites[objectData['object']](objectData['panel'], dir=objectData['dir'],
-                                                flipped=objectData['flipped'], reverse=objectData['reverse'], colour=objectData['colour'])
-        
+        fakeObjectSprites[objectData['object']](
+            objectData['panel'],
+            dir=objectData['dir'],
+            flipped=objectData['flipped'],
+            reverse=objectData['reverse'],
+            colour=objectData['colour']
+        )
+
         objectData['after_id'] = objectData['panel'].after(
-            2000, lambda panel=objectData['panel']: panel.tag_raise('selected'))
+            2000,
+            lambda panel=objectData['panel']: panel.tag_raise('selected')
+        )
     rotate.bind("<Button-1>", rotateObject)
 
     def selectColour(colour):
+        """Change the colour of an object."""
         try:
             objectData['panel']
         except KeyError:
@@ -567,41 +629,56 @@ def levelEditor():
             pass
         except KeyError:
             pass
-        if colour == False and objectData['object'] in ['r', 'n']:
+        if colour is False and objectData['object'] in ['r', 'n']:
             colour = 'end'
-        if colour == False and objectData['object'] == 'd':
-            # Doors must have a colour and don't activate colours, use red as a default.
+        if colour is False and objectData['object'] == 'd':
+            # Doors must have a colour and don't activate colours, use
+            # red as a default.
             colour = 'red'
         try:  # Remove the green outline from the previous colour if it exists.
             if objectData['colour'] == 'end':
-                objectData['colour'] = False 
-                # Set object data colour to false because end is not a colour in the colourButtons dictionary.
+                objectData['colour'] = False
+                # Set object data colour to false because end is not a
+                # colour in the colourButtons dictionary.
             colourButtons[objectData['colour']][0].itemconfigure(
-                colourButtons[objectData['colour']][1], outline="#9a9a9a")
+                colourButtons[objectData['colour']][1],
+                outline="#9a9a9a"
+            )
         except KeyError:
             pass
         objectData['colour'] = colour
 
         fakeObjectSprites[objectData['object']](
-            objectData['panel'], colour=objectData['colour'], dir=objectData['dir'], flipped=objectData['flipped'])
-        
+            objectData['panel'],
+            colour=objectData['colour'],
+            dir=objectData['dir'],
+            flipped=objectData['flipped'],
+            reverse=objectData['reverse']
+        )
+
         if colour == 'end':
             colour = False
         colourButtons[colour][0].itemconfigure(
             colourButtons[colour][1], outline="#6cca41")
 
         objectData['after_id'] = objectData['panel'].after(
-            2000, lambda panel=objectData['panel']: panel.tag_raise('selected'))
+            2000,
+            lambda panel=objectData['panel']: panel.tag_raise('selected')
+        )
 
     def selectDelete(event):
+        """Select the delete button and delete objects that are clicked."""
         global objectData
         try:
-            # Reset the previously selected panel and clear the objectData dictionary
+            # Reset the previously selected panel and clear the objectData
+            # dictionary
             objectData['panel'].delete('selected')
             fakeObjectSprites[objectData['object']](
                 objectData['panel'], dir=0, flipped=False, noborder=True)
             colourButtons[objectData['colour']][0].itemconfigure(
-                colourButtons[objectData['colour']][1], outline="#9a9a9a")
+                colourButtons[objectData['colour']][1],
+                outline="#9a9a9a"
+            )
         except KeyError:
             pass
         try:
@@ -613,8 +690,9 @@ def levelEditor():
         objectData['object'] = ''
         selectIndicator(delete)
     delete.bind('<Button-1>', selectDelete)
-    
+
     def highlightPanel(panel):
+        """Change the colour of the panel being hovered over."""
         try:
             # Check if an object (or the delete button) has been selected
             objectData['object']
@@ -625,33 +703,40 @@ def levelEditor():
             colour = "#DB3939"
         else:
             colour = "#60e8f7"
-        
+
         panel.itemconfig('highlight', outline=colour, width=3)
-    
 
     def build(panel):
+        """Place the current object on the clicked panel."""
         global objectData
         try:
             # Check if an object (or the delete button) has been selected
             objectData['object']
         except KeyError:
             return
-        
+
         global selectedObject
         y = panel.grid_info()['row']
         x = panel.grid_info()['column']
+
         def changeDefaultSelected(y, x):
-                global selectedObject
-                panels[selectedObject[0]][selectedObject[1]].delete('selected') # Remove the selection indicator from the previously selected object
-                selectedObject = [y,x]
+            global selectedObject
+            # Remove the selection indicator from the previously selected object
+            panels[selectedObject[0]][selectedObject[1]].delete('selected')
+            selectedObject = [y, x]
 
         if objectData['object'] in movableObjects or objectData['object'] == 's':
-            if selectedObject == []: 
-                # Set the selectedObject variable and start the flashing function if this is the first movable placed
-                selectedObject = [y,x]
+            if selectedObject == []:
+                # Set the selectedObject variable and start the flashing
+                # function if this is the first movable placed
+                selectedObject = [y, x]
                 selectIndicatorFlash(panel, True)
-                # Flashing function will automatically change based on the selectedObject variable
-            panels[y][x].bind("<Button-3>", lambda event, y=y, x=x: changeDefaultSelected(y, x))
+                # Flashing function will automatically change based on
+                # the selectedObject variable
+            panels[y][x].bind(
+                "<Button-3>",
+                lambda event, y=y, x=x: changeDefaultSelected(y, x)
+            )
         else:
             panels[y][x].unbind("<Button-3>")
 
@@ -659,119 +744,193 @@ def levelEditor():
             objectPanel = objectData.pop('panel')
         except KeyError:
             pass
-        # Remove the panel item from objectData to prevent issues with the setPanel function
+        # Remove the panel item from objectData to prevent issues with the
+        # setPanel function
 
-        if objectData['object'] in ['s','e']:
-            # Remove another spawner/emitter of this colour because only one can exist for each colour.
+        if objectData['object'] == 's':
+            # Remove another spawner/emitter/reciever/button of this colour because only one
+            # can exist for each colour.
             for sY in range(10):
                 for sX in range(10):
-                    if objects[sY][sX][0] == 's' and objects[sY][sX][2] == objectData['colour']:
+                    if (objects[sY][sX][0] == 's'
+                            and objects[sY][sX][2] == objectData['colour']):
                         panels[sY][sX].delete('main')
                         panels[sY][sX].delete('frame')
-                        objects[sY][sX] = ['','','']
-                        if selectedObject == [sY,sX]:
+                        objects[sY][sX] = ['', '', '']
+                        if selectedObject == [sY, sX]:
                             # If the old spawner was selected, select the new one.
                             panels[sY][sX].delete('selected')
-                            selectedObject = [y,x]
-        setPanelFake(panel, type=objectData['object'], setData=True, **objectData)
+                            selectedObject = [y, x]
+        setPanelFake(
+            panel, type=objectData['object'], setData=True, **objectData)
         try:
             objectData['panel'] = objectPanel
         except UnboundLocalError:
             pass
-        
-        if selectedObject == [y,x] and not objectData['object'] in ['b','p','s']:
+
+        if (selectedObject == [y, x]
+                and not objectData['object'] in ['b', 'p', 's']):
             # If the selected object is this panel, set it to a different panel.
             found = False
             for sY in range(10):
                 for sX in range(10):
-                    if objects[sY][sX][0] in movableObjects or objects[sY][sX][0] == 's':
-                        # If it finds another movable, make it selected and break
+                    if (objects[sY][sX][0] in movableObjects
+                            or objects[sY][sX][0] == 's'):
+                        # If it finds another movable, make it selected and
+                        # break
                         changeDefaultSelected(sY, sX)
                         found = True
                         break
                 if found:
                     break
             else:
-                # If it loops through every panel an isn't broken (so no other movable exists)
+                # If it loops through every panel an isn't broken (so no
+                # other movable exists)
                 panels[y][x].delete('selected')
                 selectedObject = []
                 # Reset selectedObject
 
-        # Use the setPanel function passing objectData as kwargs. This will only use data needed for the object being created and will delete an object if type=''.
-        panel.tag_raise("highlight") #Raise the grid to be above the sprite
+        # Use the setPanel function passing objectData as kwargs. This will
+        # only use data needed for the object being created and will
+        # delete an object if type=''.
+        panel.tag_raise("highlight")  # Raise the grid to be above the sprite
 
     for y in range(10):
         for x in range(10):
-            panels[y][x].bind("<Enter>",lambda event, panel=panels[y][x]: highlightPanel(panel))
-            panels[y][x].bind("<Leave>",lambda event, panel=panels[y][x]: panel.itemconfig('highlight', outline="white", width=1)) # Reset the colour.
-            panels[y][x].bind("<Button-1>", lambda event, panel=panels[y][x]: build(panel))
-    
+            panels[y][x].bind(
+                "<Enter>",
+                lambda event, panel=panels[y][x]: highlightPanel(panel)
+            )
+            panels[y][x].bind(
+                "<Leave>",
+                lambda event, panel=panels[y][x]:
+                    panel.itemconfig('highlight', outline="white", width=1)
+            )  # Reset the colour.
+            panels[y][x].bind(
+                "<Button-1>",
+                lambda event, panel=panels[y][x]: build(panel)
+            )
 
     def saveLevelPopup():
+        """The popup that asks the user to name their level and saves it to a file."""
         existsWarning = False
+
         def saveLevel():
-            nonlocal existsWarning # Nonlocal defines variables that are neither global nor local, but are local to parent functions
+            """Format the name to save as a file and save it in the customLevels folder."""
+            # Nonlocal defines variables that are neither global nor local, but
+            # are local to parent functions
+            nonlocal existsWarning
             name = saveName.get()
             fileName = name.strip()
-            fileNameRules = str.maketrans(" ", "_", "<>:\"/\\|?*") # Remove all characters that can't be in a file name
-            fileName = fileName.translate(fileNameRules) # Use it to remove those characters from the file name, and replace spaces with underscores.
+            # Remove all characters that can't be in a file name
+            fileNameRules = str.maketrans(" ", "_", "<>:\"/\\|?*")
+            # Use it to remove those characters from the file name, and
+            # replace spaces with underscores.
+            fileName = fileName.translate(fileNameRules)
             if fileName.replace("_", "") == '':
-                # If the name is empty or contains only spaces (replaced by underscores, removed to check)
+                # If the name is empty or contains only spaces (replaced by
+                # underscores, removed to check)
                 saveButton.grid_forget()
                 cancelButton.grid_forget()
-                # Remove the grid of the buttons (so they can be moved down after text is created)
-                warningText = Label(savePopupFrame, text='Name must not be empty!', bg='black', fg="#ff5f5f", font=("Trebuchet MS", 10))
-                warningText.grid(row=3,column=0)
-                saveButton.grid(row=4,column=0, pady=(17,2))
-                cancelButton.grid(row=5,column=0, pady=2)
+                # Remove the grid of the buttons (so they can be moved down
+                # after text is created)
+                warningText = Label(
+                    savePopupFrame,
+                    text='Name must not be empty!',
+                    bg='black',
+                    fg="#ff5f5f",
+                    font=("Trebuchet MS", 10)
+                )
+                warningText.grid(row=3, column=0)
+                saveButton.grid(row=4, column=0, pady=(17, 2))
+                cancelButton.grid(row=5, column=0, pady=2)
                 return
 
             fileName = fileName + ".txt"
-            
-            if os.path.exists(f"customLevels/{fileName}") and not existsWarning:
-                # If a file of that name exists and the file exists warning hasn't been displayed.
+
+            if (os.path.exists(f"customLevels/{fileName}")
+                    and not existsWarning):
+                # If a file of that name exists and the file exists warning
+                # hasn't been displayed.
                 saveButton.grid_forget()
                 cancelButton.grid_forget()
-                # Remove the grid of the buttons (so they can be moved down after text is created)
-                warningText = Label(savePopupFrame, text='Level of that name already saved.\nClick again to overwright. (OLD LEVEL WILL BE LOST)', bg='black', fg="#ff5f5f", font=("Trebuchet MS", 10))
-                warningText.grid(row=3,column=0)
-                saveButton.grid(row=4,column=0, pady=(17,2))
-                cancelButton.grid(row=5,column=0, pady=2)
+                # Remove the grid of the buttons (so they can be moved down
+                # after text is created)
+                warningText = Label(
+                    savePopupFrame,
+                    text=('Level of that name already saved.\n'
+                          'Click again to overwright. (OLD LEVEL WILL BE LOST)'),
+                    bg='black',
+                    fg="#ff5f5f",
+                    font=("Trebuchet MS", 10)
+                )
+                warningText.grid(row=3, column=0)
+                saveButton.grid(row=4, column=0, pady=(17, 2))
+                cancelButton.grid(row=5, column=0, pady=2)
                 existsWarning = True
                 return
-            
+
             file = open(f"customLevels/{fileName}", 'w')
             file.write(f"name = {name}\n")
-            file.close() # Close the file to open it again in append mode (adds extra data rather than overwriting the existing data)
+            file.close()
+            # Close the file to open it again in append mode (adds extra data
+            # rather than overwriting the existing data)
 
             file = open(f"customLevels/{fileName}", 'a')
-            for i in objects: 
+            for i in objects:
                 # Write level object data to file
-                i = str(i) # Convert list to a string
-                i = i + "\n" # Add line break at the end
-                file.write(i) # Add it to the level file
-            #TODO: Add way to select initially selected movable object, and don't call the selectInit() function in createLevel() if there are no movables
+                i = str(i)  # Convert list to a string
+                i = i + "\n"  # Add line break at the end
+                file.write(i)  # Add it to the level file
+            # TODO: Add way to select initially selected movable object, and
+            # don't call the selectInit() function in createLevel() if there
+            # are no movables
             try:
-                file.write(f"{selectedObject[0]} {selectedObject[1]}") # Store the position of the object that should start selected
+                # Store the position of the object that should start
+                # selected
+                file.write(f"{selectedObject[0]} {selectedObject[1]}")
             except IndexError:
-                file.write("-1") # Store this if no movable objects exist
+                file.write("-1")  # Store this if no movable objects exist
             file.close()
             savePopupFrame.destroy()
 
-
-            
-        savePopupFrame = Frame(root, bg='black', highlightbackground='white', highlightcolor='white', highlightthickness=5, borderwidth=10)
-        saveTitle = Label(savePopupFrame, text='Save Level', bg='black', fg='white', font=("Trebuchet MS", 16, "bold"))
-        saveSubtitle = Label(savePopupFrame, text='It will be saved in the \"Python/customLevels/\" folder', bg='black', fg='white', font=("Trebuchet MS", 12))
-        saveTitle.grid(row=0,column=0,sticky='ew')
-        saveSubtitle.grid(row=1,column=0,sticky='ew')
+        savePopupFrame = Frame(
+            root,
+            bg='black',
+            highlightbackground='white',
+            highlightcolor='white',
+            highlightthickness=5,
+            borderwidth=10
+        )
+        saveTitle = Label(
+            savePopupFrame,
+            text='Save Level',
+            bg='black',
+            fg='white',
+            font=("Trebuchet MS", 16, "bold")
+        )
+        saveSubtitle = Label(
+            savePopupFrame,
+            text='It will be saved in the \"Python/customLevels/\" folder',
+            bg='black',
+            fg='white',
+            font=("Trebuchet MS", 12)
+        )
+        saveTitle.grid(row=0, column=0, sticky='ew')
+        saveSubtitle.grid(row=1, column=0, sticky='ew')
         saveName = Entry(savePopupFrame, width=30, font=("Arial", 14))
-        saveName.grid(row=2,column=0,pady=(15,5))
-        saveButton = Button(savePopupFrame, text='Save', width=32, command=saveLevel)
-        saveButton.grid(row=3,column=0, pady=(17,2))
-        cancelButton = Button(savePopupFrame, text='Cancel', width=32, command=lambda: savePopupFrame.destroy())
-        cancelButton.grid(row=4,column=0, pady=2)
-        savePopupFrame.grid(column=0,row=0,columnspan=13,rowspan=10)
+        saveName.grid(row=2, column=0, pady=(15, 5))
+        saveButton = Button(savePopupFrame, text='Save', width=32,
+                            command=saveLevel)
+        saveButton.grid(row=3, column=0, pady=(17, 2))
+        cancelButton = Button(
+            savePopupFrame,
+            text='Cancel',
+            width=32,
+            command=lambda: savePopupFrame.destroy()
+        )
+        cancelButton.grid(row=4, column=0, pady=2)
+        savePopupFrame.grid(column=0, row=0, columnspan=13, rowspan=10)
 
     play = 0
     save = 0
@@ -780,21 +939,24 @@ def levelEditor():
     # Create the button variables so they can be cleared
 
     buttonFrame = Frame(root, bg='black', borderwidth=5)
-    buttonFrame.grid(row=9,column=10,columnspan=3,sticky='ew')
+    buttonFrame.grid(row=9, column=10, columnspan=3, sticky='ew')
 
     def returnToEditor():
-        nextLevel(load=-2) # Clear the level
+        """Return to the level editor from a level."""
+        nextLevel(load=-2)  # Clear the level
         for y in range(10):
             for x in range(10):
-                objects[y][x] = ['','','']
+                objects[y][x] = ['', '', '']
                 # Clear the objects array too.
         levelEditor()
 
-    def clearEditor(loadLevel = True):
+    def clearEditor(loadLevel=True):
+        """Remove all level editor objects (when loading a level from the editor)."""
         colourPanels = []
         for i in colourButtons.values():
             colourPanels.append(i[0])
-        # Colour buttons is a list inside a dictionary so this has to be reversed to get the panels.
+        # Colour buttons is a list inside a dictionary so this has to be
+        # reversed to get the panels.
         editorObjects = []
         editorObjects.append(titleFrame)
         editorObjects.append(rotate)
@@ -802,45 +964,61 @@ def levelEditor():
         editorObjects.append(rect)
         editorObjects.append(dataButtons)
         editorObjects.extend(selectableObjects)
-        editorObjects.extend(colourPanels) 
-        editorObjects.extend([play,save,load,exit])
+        editorObjects.extend(colourPanels)
+        editorObjects.extend([play, save, load, exit])
         editorObjects.append(buttonFrame)
         editorObjects.append(selectionNote)
-        # Create a list of every object of the level editor outside the normal grid
+        # Create a list of every object of the level editor outside the
+        # normal grid
 
         for i in editorObjects:
             i.destroy()
             # Clear all of them
+        try:
+            global indicatorFlash
+            indicatorFlash[1].after_cancel(indicatorFlash[0])
+            # Cancel the indicator flashing (should cancel anyway but just in case)
+        except NameError:
+            pass
+        except ValueError:
+            pass
 
         if loadLevel:
             global editorLevelTemp
-            editorLevelTemp = copy.deepcopy(objects) # deepcopy makes a copy including nested lists
+            # deepcopy makes a copy including nested lists
+            editorLevelTemp = copy.deepcopy(objects)
             global selectedObjectTemp
             global selectedObject
             selectedObjectTemp = selectedObject.copy()
-            # Store the current level in a temporary variable so it can be restored when level is exited
+            # Store the current level in a temporary variable so it can be
+            # restored when level is exited
             if selectedObject == []:
-                selectedObject = -1 # -1 is used in the level files for selectedObject, meaning no movables in level so don't run selectInit()
+                selectedObject = -1
+                # -1 is used in the level files for selectedObject, meaning
+                # no movables in level so don't run selectInit()
             global exitButton
             exitButton = Button(root, text='Return', command=returnToEditor)
-            exitButton.grid(row=10,column=0,columnspan=10,pady=10)
+            exitButton.grid(row=10, column=0, columnspan=10, pady=10)
             createLevel(objects, selectedObject)
         else:
             levelSelector()
 
-    play = Button(buttonFrame,text='Play',command=clearEditor)
-    save = Button(buttonFrame,text='Save', command=saveLevelPopup)
-    load = Button(buttonFrame,text='Load', command=lambda: clearEditor(False))
-    exit = Button(buttonFrame,text='Exit', command=lambda: root.destroy())
+    play = Button(buttonFrame, text='Play', command=clearEditor)
+    save = Button(buttonFrame, text='Save', command=saveLevelPopup)
+    load = Button(buttonFrame, text='Load', command=lambda: clearEditor(False))
+    exit = Button(buttonFrame, text='Exit', command=lambda: root.destroy())
 
-    play.grid(row=0,column=0)
-    save.grid(row=0,column=1)
-    load.grid(row=0,column=2)
-    exit.grid(row=0,column=3)
+    play.grid(row=0, column=0)
+    save.grid(row=0, column=1)
+    load.grid(row=0, column=2)
+    exit.grid(row=0, column=3)
     for i in range(4):
         buttonFrame.columnconfigure(i, weight=1)
 
-levels.append(levelEditor) # levelEditor is 'level 8' so that it is loaded when level 7 is completed
+
+# levelEditor is 'level 8' so that it is loaded when level 7 is completed
+levels.append(levelEditor)
+
 
 def createLevel(objectsData, initialSelect, fake=False):
     """Build a level from object list. Used in level editor and when loading from a saved file."""
@@ -858,31 +1036,32 @@ def createLevel(objectsData, initialSelect, fake=False):
             type = objectsData[y][x][0]
             data1 = objectsData[y][x][1]
             data2 = objectsData[y][x][2]
-            objects[y][x] = ['','','']
+            objects[y][x] = ['', '', '']
             # Make sure the objects list is empty so that there isn't issues with movables storing themselves below them.
             # (Done after storing the data just in case)
             panels[y][x].delete('main')
             panels[y][x].delete('frame')
-            if type != '': # If the panel shouldn't be empty.
+            if type != '':  # If the panel shouldn't be empty.
                 if type != 'd':
                     if fake:
                         setPanelFake(panels[y][x], type, setData=True, colour=data2, dir=data1,
-                        flipped=data1, reverse=data1)
+                                     flipped=data1, reverse=data1)
                         # Use the fake version of the sprites if fake mode is enabled (used when restoring editor level).
                     else:
                         setPanel(y, x, type, colour=data2, dir=data1,
-                        flipped=data1, reverse=data1)
+                                 flipped=data1, reverse=data1)
                 else:
                     if fake:
-                        setPanelFake(panels[y][x],type,setData=True,colour=data1,reverse=data2)
+                        setPanelFake(
+                            panels[y][x], type, setData=True, colour=data1, reverse=data2)
                     else:
-                        setPanel(y,x,type,colour=data1,reverse=data2)
+                        setPanel(y, x, type, colour=data1, reverse=data2)
                 if type in movableObjects or type == 's':
                     movables.append(panels[y][x])
                     # If the object is movable (or a spawner)
                 # Most things that are required are stored in data 1, while colour is always stored in data2. (except doors and I cant be bothered changing everything)
 
-    if (initialSelect != -1 or initialSelect != []) and not fake and movables != []:
+    if (initialSelect != -1 and initialSelect != []) and not fake and movables != []:
         # initialSelect will be -1 if no movables are in the level.
         y = initialSelect[0]
         x = initialSelect[1]
@@ -894,9 +1073,11 @@ def createLevel(objectsData, initialSelect, fake=False):
 # TODO: Make a unique colour for ending the level, replacing the default colour for objects that activate colours in the level editor.
 # This will make it less confusing and also make red actually do something for objects activated by colours
 
+
 def levelSelector():
+    """The menu for users to pick a level, including custom levels."""
     try:
-        root.after_cancel(laser.runEndEvent) 
+        root.after_cancel(laser.runEndEvent)
         # Cancel the event from running this again
     except ValueError:
         pass
@@ -913,7 +1094,7 @@ def levelSelector():
         for x in range(10):
             panels[y][x].delete('all')
             panels[y][x].grid_forget()
-            objects[y][x] = ['','','']
+            objects[y][x] = ['', '', '']
             # Hide all panels (This screen doesn't use them)
 
     # Scrollable window logic and objects
@@ -928,24 +1109,28 @@ def levelSelector():
     # Create a canvas in the frame
     innerCanvas = Canvas(outerFrame, bg='black', highlightthickness=0)
     # Create a scroll bar
-    scrollbar = Scrollbar(outerFrame, orient=VERTICAL, command=innerCanvas.yview, width=15)
+    scrollbar = Scrollbar(outerFrame, orient=VERTICAL,
+                          command=innerCanvas.yview, width=15)
     scrollbar.pack(side=RIGHT, fill=Y)
     innerCanvas.pack(side=LEFT, fill=BOTH, expand=True)
     # Set the canvas to scroll with the scrollbar
-    innerCanvas.configure(yscrollcommand = scrollbar.set)
+    innerCanvas.configure(yscrollcommand=scrollbar.set)
     innerCanvas.bind(
-        '<Configure>', lambda e: innerCanvas.configure(scrollregion=innerCanvas.bbox("all"))
+        '<Configure>', lambda e: innerCanvas.configure(
+            scrollregion=innerCanvas.bbox("all"))
     )
     # Create a frame inside the canvas that everything is stored in
     frame = Frame(innerCanvas, bg='black', borderwidth=0)
     innerCanvas.create_window((0, 0), window=frame, anchor="nw")
 
     # Actual text and buttons
-    title = Label(frame,text="Level Selector", fg='white', bg='black', font=('Trebuchet MS',16,'bold'))
-    subtitle = Label(frame, text="Pick a level below to play it.", fg='white', bg='black', font=('Trebuchet MS',12))
+    title = Label(frame, text="Level Selector", fg='white',
+                  bg='black', font=('Trebuchet MS', 16, 'bold'))
+    subtitle = Label(frame, text="Pick a level below to play it.",
+                     fg='white', bg='black', font=('Trebuchet MS', 12))
 
-    title.grid(row=0,column=0,pady=(10,0), sticky='W')
-    subtitle.grid(row=1,column=0,pady=(0,10), sticky='W')
+    title.grid(row=0, column=0, pady=(10, 0), sticky='W')
+    subtitle.grid(row=1, column=0, pady=(0, 10), sticky='W')
 
     # colourKeys = Frame(root, bg='black', borderwidth=0)
     # defaultKey = Label(colourKeys, text='Default Levels', bg='black', fg="#2ADF2D", font=('Arial',10,'bold'))
@@ -955,7 +1140,7 @@ def levelSelector():
     # colourKeys.grid(row=2,column=0, sticky='W')
 
     def loadLevel(level, custom):
-        '''This function converts level data from a file to a string to actual level data.'''
+        """This function converts level data from a file to a string to actual level data."""
         outerFrame.destroy()
         # Destroy the outer frame, all other objects of this screen are decendants of it so they are destroyed too.
         for y in range(10):
@@ -971,11 +1156,11 @@ def levelSelector():
             global exitButton
             exitButton = Button(root, text='Return', command=levelSelector)
             if not custom:
-                exitButton.grid(row=10,column=0,columnspan=10,pady=10)
+                exitButton.grid(row=10, column=0, columnspan=10, pady=10)
                 nextLevel(load=level)
             else:
                 file = open(f"customLevels/{customLevels[level]}")
-                objectDataStr = file.readlines() # Read and store level data from level file
+                objectDataStr = file.readlines()  # Read and store level data from level file
                 file.close()
                 objectDataStr.pop(0)
                 initialSelect = objectDataStr.pop(10)
@@ -1008,33 +1193,45 @@ def levelSelector():
                 # ^^ This was removed because I found a better way to convert to list, but kept incase needed ^^
                 objectData = []
                 for i in range(len(objectDataStr)):
-                    objectDataStr[i] = objectDataStr[i].rstrip() # Remove new line characters
-                    objectData.append(ast.literal_eval(objectDataStr[i])) # Uses an ast library function to get a list from a string formatted as a list.
+                    # Remove new line characters
+                    objectDataStr[i] = objectDataStr[i].rstrip()
+                    # Uses an ast library function to get a list from a string formatted as a list.
+                    objectData.append(ast.literal_eval(objectDataStr[i]))
                 global levelInfo
-                levelInfo = Label(root, text=f"Custom Level \"{level}\"", bg='black', fg='white', font=('Arial', 12, 'bold'))
-                levelInfo.grid(row=10, column=0, columnspan=10, pady=(10,0), sticky='ew')
-                exitButton.grid(row=11, column=0, columnspan=10, pady=(0,10))
+                levelInfo = Label(root, text=f"Custom Level \"{level}\"", bg='black', fg='white', font=(
+                    'Arial', 12, 'bold'))
+                levelInfo.grid(row=10, column=0, columnspan=10,
+                               pady=(10, 0), sticky='ew')
+                exitButton.grid(row=11, column=0, columnspan=10, pady=(0, 10))
                 createLevel(objectData, initialSelect)
-        
-    levelEditorButton = Label(frame, text='Level Editor', bg='black', fg="#EEC24A", font=('Arial', 12, 'bold'))
-    # Add underline when hovered over.
-    levelEditorButton.bind("<Enter>", lambda event: levelEditorButton.config(font = ('Arial', 12, 'bold', 'underline')))
-    # Remove underline when mouse leaves.
-    levelEditorButton.bind("<Leave>", lambda event: levelEditorButton.config(font = ('Arial', 12, 'bold')))
-    # Load level when clicked
-    levelEditorButton.bind("<Button-1>", lambda event: loadLevel("editor", False))
-    levelEditorButton.grid(row=3,column=0,pady=(0,10), sticky=W, padx=5)
 
-    defaultText = Label(frame, text='Default Levels', bg='black', fg="#FFFFFF", font=('Arial',10,'bold'))
-    defaultText.grid(row=4,column=0,sticky=W,pady=(0,5))
-    for i in range(len(levels)-1): # Don't include the level editor from the levels list
+    levelEditorButton = Label(frame, text='Level Editor',
+                              bg='black', fg="#EEC24A", font=('Arial', 12, 'bold'))
+    # Add underline when hovered over.
+    levelEditorButton.bind("<Enter>", lambda event: levelEditorButton.config(
+        font=('Arial', 12, 'bold', 'underline')))
+    # Remove underline when mouse leaves.
+    levelEditorButton.bind(
+        "<Leave>", lambda event: levelEditorButton.config(font=('Arial', 12, 'bold')))
+    # Load level when clicked
+    levelEditorButton.bind(
+        "<Button-1>", lambda event: loadLevel("editor", False))
+    levelEditorButton.grid(row=3, column=0, pady=(0, 10), sticky=W, padx=5)
+
+    defaultText = Label(frame, text='Default Levels',
+                        bg='black', fg="#FFFFFF", font=('Arial', 10, 'bold'))
+    defaultText.grid(row=4, column=0, sticky=W, pady=(0, 5))
+    for i in range(len(levels)-1):  # Don't include the level editor from the levels list
         # Create a button for every level
-        text = Label(frame,text=f"• Level {i}", bg='black', fg='#2ADF2D', font=('Arial', 12, 'bold'))
-        text.grid(row=i+5,column=0,pady=5,padx=(35,0),sticky=W)
+        text = Label(frame, text=f"• Level {i}", bg='black', fg='#2ADF2D', font=(
+            'Arial', 12, 'bold'))
+        text.grid(row=i+5, column=0, pady=5, padx=(35, 0), sticky=W)
         # Add underline when hovered over.
-        text.bind("<Enter>", lambda event, object=text: object.config(font = ('Arial', 12, 'bold', 'underline')))
+        text.bind("<Enter>", lambda event, object=text: object.config(
+            font=('Arial', 12, 'bold', 'underline')))
         # Remove underline when mouse leaves.
-        text.bind("<Leave>", lambda event, object=text: object.config(font = ('Arial', 12, 'bold')))
+        text.bind("<Leave>", lambda event, object=text: object.config(
+            font=('Arial', 12, 'bold')))
         # Load level when clicked
         text.bind("<Button-1>", lambda event, level=i: loadLevel(level, False))
 
@@ -1046,7 +1243,7 @@ def levelSelector():
         # Remove items that aren't levels
         if i[-4:] != ".txt":
             # If the file does not end in .txt
-            notLevels.append(i) 
+            notLevels.append(i)
             # Store it in a list to delete later (removing items from a list currently being iterated causes problems)
             continue
             # Don't try to open it (it might be a directory or something that can't be opened)
@@ -1056,38 +1253,43 @@ def levelSelector():
         # Read the first line
         if firstLine[:6] != "name =":
             # If the file does not start with the level's name
-            notLevels.append(i) 
+            notLevels.append(i)
             # Store it in a list to delete later (removing items from a list currently being iterated causes problems)
             continue
-        customLevels[firstLine[7:]] = i # Store the level name (the text after 'name = ' on the first line) and file in a dictionary
+        # Store the level name (the text after 'name = ' on the first line) and file in a dictionary
+        customLevels[firstLine[7:]] = i
         file.close()
-    
+
     for i in notLevels:
         files.remove(i)
         # Remove everything that isn't a level from the files list
-    
-    
+
     if len(customLevels) > 0:
         columnoffset = len(levels) + 5
-        customText = Label(frame, text='Custom Levels', bg='black', fg="#FFFFFF", font=('Arial',10,'bold'))
-        customText.grid(row=columnoffset,column=0,sticky=W,pady=(10,5))
+        customText = Label(frame, text='Custom Levels',
+                           bg='black', fg="#FFFFFF", font=('Arial', 10, 'bold'))
+        customText.grid(row=columnoffset, column=0, sticky=W, pady=(10, 5))
         for i, n in zip(customLevels, range(len(customLevels))):
-            text = Label(frame,text=f"• {i}", bg='black', fg='#2A88DF', font=('Arial', 12, 'bold'))
-            text.grid(row=n+columnoffset+1,column=0,pady=5,padx=(35,0),sticky=W)
+            text = Label(frame, text=f"• {i}", bg='black', fg='#2A88DF', font=(
+                'Arial', 12, 'bold'))
+            text.grid(row=n+columnoffset+1, column=0,
+                      pady=5, padx=(35, 0), sticky=W)
             # Add underline when hovered over.
-            text.bind("<Enter>", lambda event, object=text: object.config(font = ('Arial', 12, 'bold', 'underline')))
+            text.bind("<Enter>", lambda event, object=text: object.config(
+                font=('Arial', 12, 'bold', 'underline')))
             # Remove underline when mouse leaves.
-            text.bind("<Leave>", lambda event, object=text: object.config(font = ('Arial', 12, 'bold')))
+            text.bind("<Leave>", lambda event, object=text: object.config(
+                font=('Arial', 12, 'bold')))
             # Load level when clicked
-            text.bind("<Button-1>", lambda event, level=i: loadLevel(level, True))
-        
-    
+            text.bind("<Button-1>", lambda event,
+                      level=i: loadLevel(level, True))
+
 
 if not os.path.isdir("customLevels"):
     # If the custom levels folder doesn't exist
     os.mkdir("customLevels")
 
-editorStr = sys.argv[1] # Argument passed to this script from menu.py
+editorStr = sys.argv[1]  # Argument passed to this script from menu.py
 editor = bool(editorStr)
 if editor:
     levelEditor()
@@ -1096,9 +1298,10 @@ else:
         level = int(f.readline())
         # Read the first line of the file and convert it to int.
     if level == 8:
-        levelSelector() # Load the level selector if the level has been completed
+        levelSelector()  # Load the level selector if the level has been completed
     else:
-        laser.endEvent = nextLevel # Set endEvent to the function that should run after a level is completed.
+        # Set endEvent to the function that should run after a level is completed.
+        laser.endEvent = nextLevel
         # laser. is used to ensure that the value in the laser script is changed, not just the one local to this file.
         laser.level = level
         levels[level]()
@@ -1106,7 +1309,6 @@ else:
 
 # for i in objects:
 #     print(i)
-        
 
 
 root.mainloop()  # Ensure all functions are defined before this is run.
