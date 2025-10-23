@@ -1,4 +1,7 @@
-"""The actual level design that imports and calls functions from the laser file."""
+"""
+The actual level design that imports and calls
+functions from the laser file.
+"""
 import tkinter
 from tkinter import *
 from laser import *
@@ -11,7 +14,10 @@ import copy
 
 
 def selectInit(selectedObject, movables):
-    """Automatically select a box and bind movement keys and mouse clicking to boxes"""
+    """
+    Automatically select a box and bind movement keys
+    and mouse clicking to boxes
+    """
     for i in movables:
         y = i.grid_info()['row']
         x = i.grid_info()['column']
@@ -45,6 +51,9 @@ def level0():
 
     emitterSprite(6, 7, active=False, dir=0)
     recieverSprite(2, 2, laser=False, dir=3, colour='end')
+
+    # panels[7][7].create_text(panelWidth/4, panelHeight/(1/3), text='Click Me', tags='info', fill='white')
+    
 
     # laserEvent(
     #     red = levelEnd
@@ -105,12 +114,6 @@ def level2():
     emitterSprite(4, 8, active=False, dir=3)
     recieverSprite(1, 8, laser=False, dir=1, colour='end')
     recieverSprite(0, 3, laser=False, dir=0, colour='red')
-
-    # laserEvent(
-    #     green = doorOpen,
-    #     red = levelEnd #TODO: Make red reciever always the reciever for winning
-    #     #Put functions for different colours here
-    # )
 
     selectInit([3, 4], movables)
 
@@ -225,15 +228,6 @@ def level5():
     recieverSprite(9, 3, laser=False, dir=2, colour='orange')
     recieverSprite(7, 9, laser=False, dir=1, colour='end')
 
-    # doorOpeners = dict.fromkeys(('green','blue','yellow','purple','orange'), doorOpen)
-    # laserEvent(
-    #     **doorOpeners,
-    #     red = levelEnd
-    # )
-
-    # TODO: Split laser doesn't move through door opened on the same frame
-    # TODO: Change door functions to allow colour to be set when door created, automatically setting up recievers.
-
     selectInit([6, 6], movables)
 
 
@@ -259,19 +253,15 @@ def level6():
     recieverSprite(1, 9, dir=1, colour='purple')
     recieverSprite(9, 8, dir=2, colour='end')
 
-    # emitterActivators = dict.fromkeys(('green','blue','yellow','purple'), emitterActivate)
-    # laserEvent(
-    #     **emitterActivators,
-    #     red = levelEnd
-    # )
-
 
 levels.append(level6)
 
 
 def level7():
     """Boxes intro."""
-    # Fill all panels in the bottom half with floors and leave empty gaps only where lasers go to make the level less confusing and intimidating.
+    # Fill all panels in the bottom half with floors and leave
+    # empty gaps only where lasers go to make the
+    # level less confusing and intimidating.
     fillRect((5, 0), (9, 3), 'f')
     setPanel(5, 2, '')
     fillRect((0, 0), (0, 8), 'w')
@@ -379,7 +369,9 @@ def levelEditor():
             panel.delete('selected')
         global indicatorFlash
         indicatorFlash = []
-        indicatorFlash.append(panel.after(800, lambda: selectIndicatorFlash(panel, not draw)))
+        indicatorFlash.append(
+            panel.after(800, lambda: selectIndicatorFlash(panel, not draw))
+            )
         indicatorFlash.append(panel)
         # Run the function again after 800ms with draw inverted.
 
@@ -514,7 +506,10 @@ def levelEditor():
         colourButtons[n] = [panel, circle]
 
     def selectObject(panel, object):
-        """Select an object and remove the selection indicator from the previous object."""
+        """
+        Select an object and remove the selection
+        indicator from the previous object.
+        """
         global objectData
         try:
             # Reset the previously selected panel and clear the objectData

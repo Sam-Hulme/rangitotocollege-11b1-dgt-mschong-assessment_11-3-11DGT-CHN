@@ -984,12 +984,14 @@ def boxButtonFrame(panel, colour):
             panel.create_rectangle(
                 lineX, lineY, lineX+xOffset, lineY+yOffset, fill='black', tags='frame')
 
-def test(e):
-    for y in range(10):
-        for x in range(10):
-            panels[y][x].delete('test')
-            panels[y][x].create_text(32,32,text=objects[y][x][0],fill='white',tags='test')
-root.bind("<p>", test)
+# def test(e):
+#     for y in range(10):
+#         for x in range(10):
+#             panels[y][x].delete('test')
+#             panels[y][x].create_text(32,32,text=objects[y][x][0],fill='white',tags='test')
+
+
+# root.bind("<p>", test)
 
 
 def laserUpdate():
@@ -1186,7 +1188,7 @@ def laserUpdate():
                 # Run other emitters again
                 if i[3]:
                     laserMove(i[0], i[1], i[2])
-                
+
             # Update the laser from that emitter
             updateColours()
 
@@ -1395,7 +1397,7 @@ def doorOpen(reverse, colour):
             x = i[1]
             doorReverse = i[2]
             # print(reverse, objects[y][x][0])
-            reverseOverrides = ['', 'd'] # Objects that are replaced by doors when reversed
+            reverseOverrides = ['', 'd']  # Objects that are replaced by doors when reversed
             if doorReverse:
                 reverseOverrides.append('l')
                 # Only override lasers if the door is reversed (so it will close if reverse is true instead of opening)
@@ -1727,7 +1729,6 @@ def recieverSpriteFake(panel, setData=False, **data):
         outline = laserColours[colour]
     except KeyError:
         outline = "#FFFFFF"  # If the colour is not yet set in the dictionary, use a placeholder
-
 
     if setData:
         # Remove another reciever of this colour because only one can exist for each colour.
